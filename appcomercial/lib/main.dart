@@ -5,6 +5,8 @@ import 'package:appcomercial/page/teste.dart';
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 
+import 'model/category_data.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -63,15 +65,7 @@ class TelaResponsiva extends StatelessWidget {
                     child: ListView(
                       padding: EdgeInsets.zero,
                       children: [
-                        DrawerHeader(
-                          decoration: BoxDecoration(
-                            color: Colors.blueGrey[900],
-                          ),
-                          child: const Text(
-                            'gay',
-                            style: TextStyle(color: Colors.white, fontSize: 24),
-                          ),
-                        ),
+                        meuGrafico(),
                         ListTile(
                           leading: Icon(Icons.home, color: Colors.white),
                           title: Text(

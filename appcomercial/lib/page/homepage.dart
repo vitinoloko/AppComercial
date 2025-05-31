@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../model/category_data.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key, required this.largura, required this.paginas});
+
   final Map<String, Widget> paginas;
   final double largura;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -15,7 +19,7 @@ class HomePage extends StatelessWidget {
                 ? BorderRadius.horizontal(left: Radius.circular(0))
                 : BorderRadius.horizontal(left: Radius.circular(12)),
       ),
-      child: Column(children: []),
+      child: Column(children: [meuGrafico()]),
     );
   }
 }
