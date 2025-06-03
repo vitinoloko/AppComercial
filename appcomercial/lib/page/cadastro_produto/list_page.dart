@@ -1,4 +1,3 @@
-import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 
 class Interface extends StatelessWidget {
@@ -13,19 +12,10 @@ class Interface extends StatelessWidget {
         color: Colors.green,
         borderRadius:
             MediaQuery.of(context).size.width < 1100
-                ? BorderRadius.horizontal(right: Radius.circular(0))
-                : BorderRadius.horizontal(right: Radius.circular(12)),
+                ? const BorderRadius.horizontal(right: Radius.circular(0))
+                : const BorderRadius.horizontal(right: Radius.circular(12)),
       ),
-      child: Column(
-        children: [
-          TextButton(
-            onPressed: () {
-              context.beamToNamed('/tste');
-            },
-            child: Text('hello world'),
-          ),
-        ],
-      ),
+      child: Column(children: []),
     );
   }
 }

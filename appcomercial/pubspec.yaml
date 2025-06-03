@@ -30,28 +30,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  fluid_kit: ^3.0.0
   beamer: ^1.7.0
-  collection: ^1.19.0
-  dropdown_button2: ^2.3.9
   cupertino_icons: ^1.0.8
-  flutter_masked_text2: ^0.9.1
   get: ^4.7.2
-  intl: ^0.20.2
-  file_picker: ^9.2.0
-  image_picker: ^1.1.2
-  path_provider: ^2.1.5
-  shared_preferences: ^2.5.2
-  image_cropper: ^9.0.0
-  fl_chart: ^0.70.2 
-  table_calendar: ^3.2.0
   http: ^1.4.0
-  salomon_bottom_bar: ^3.3.2
-  syncfusion_flutter_charts: ^29.2.7
-  flutter_map: ^8.1.1
-  latlong2: ^0.9.1
-  flutter_map_geojson: ^1.0.8
-  
+  syncfusion_flutter_charts: ^29.2.8
+ 
 
 dev_dependencies:
   flutter_test:
@@ -70,15 +54,10 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  assets:
-   - assets/
-  #   - images/a_dot_ham.jpeg
+
+  
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

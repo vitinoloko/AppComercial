@@ -1,7 +1,10 @@
+import 'package:appcomercial/page/cadastro_produto/cadastro_formpage.dart';
 import 'package:appcomercial/login.dart';
-import 'package:appcomercial/page/homepage.dart';
-import 'package:appcomercial/page/interface.dart';
-import 'package:appcomercial/page/teste.dart';
+
+import 'package:appcomercial/page/cadastro_produto/list_page.dart';
+
+import 'package:appcomercial/page/other/homepage.dart';
+
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +16,7 @@ void main() {
 
 final Map<String, Widget> paginas = {
   '/': Interface(largura: 800),
-  '/tste': Teste(largura: 800),
+  '/Cadastro': Cadastroformpage(largura: 800),
 };
 
 class MyApp extends StatelessWidget {
@@ -35,6 +38,11 @@ class MyApp extends StatelessWidget {
                         child: TelaResponsiva(paginas: entry.value),
                         type: BeamPageType.fadeTransition,
                       ),
+                // '/mapa':
+                //     (context, state, data) => BeamPage(
+                //       child: MapaPage(),
+                //       type: BeamPageType.fadeTransition,
+                //     ),
               },
             ).call,
       ),
@@ -87,7 +95,7 @@ class TelaResponsiva extends StatelessWidget {
                             style: TextStyle(color: Colors.white),
                           ),
                           onTap: () {
-                            context.beamToNamed('/tste');
+                            context.beamToNamed('/Cadastro');
                             Navigator.pop(context);
                           },
                         ),
@@ -102,7 +110,7 @@ class TelaResponsiva extends StatelessWidget {
               image:
                   MediaQuery.of(context).size.width < 600
                       ? AssetImage('')
-                      : AssetImage('image/fundo.jpg'),
+                      : AssetImage('fundo.jpg'),
               fit: BoxFit.cover,
             ),
           ),
