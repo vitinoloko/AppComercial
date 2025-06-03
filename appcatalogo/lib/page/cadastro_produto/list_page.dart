@@ -29,11 +29,11 @@ class ListPage extends StatelessWidget {
         }
 
         return ListView.builder(
-          reverse: true,
           padding: const EdgeInsets.all(16),
           itemCount: controller.foodList.length,
           itemBuilder: (context, index) {
-            final item = controller.foodList[index];
+            final item =
+                controller.foodList[controller.foodList.length - 1 - index];
 
             return Card(
               color: Colors.white,
