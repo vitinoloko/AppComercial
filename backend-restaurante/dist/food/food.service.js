@@ -22,22 +22,27 @@ let FoodService = class FoodService {
     constructor(foodRepository) {
         this.foodRepository = foodRepository;
     }
-    create(data) {
+    async create(data) {
         const food = this.foodRepository.create(data);
-        return this.foodRepository.save(food);
+        return await this.foodRepository.save(food);
     }
-    findAll() {
-        return this.foodRepository.find();
+    async findAll() {
+        return await this.foodRepository.find();
     }
-    findOne(id) {
-        return this.foodRepository.findOne({ where: { id } });
+    async findOne(id) {
+        const food = await this.foodRepository.findOne({ where: { id } });
+        if (!food)
+            throw new common_1.NotFoundException('Item não encontrado');
+        return food;
     }
     async update(id, data) {
         await this.foodRepository.update(id, data);
         return this.findOne(id);
     }
-    delete(id) {
-        return this.foodRepository.delete(id);
+    async delete(id) {
+        const food = await this.findOne(id);
+        await this.foodRepository.delete(id);
+        return { message: 'Item deletado com sucesso', food };
     }
 };
 exports.FoodService = FoodService;

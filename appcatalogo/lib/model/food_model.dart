@@ -1,5 +1,5 @@
 class Food {
-  final int? id;
+  final int? id; // Agora id é nullable
   final String name;
   final String description;
   final double price;
@@ -13,14 +13,33 @@ class Food {
 
   factory Food.fromJson(Map<String, dynamic> json) {
     return Food(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      price: (json['price'] as num).toDouble(),
+      id: json['id'] != null ? json['id'] as int : null,
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      price: json['price'] != null ? (json['price'] as num).toDouble() : 0.0,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'description': description, 'price': price};
+    return {
+      if (id != null) 'id': id,
+      'name': name,
+      'description': description,
+      'price': price,
+    };
+  }
+
+  Food copyWith({int? id, String? name, String? description, double? price}) {
+    return Food(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      price: price ?? this.price,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'Food(id: $id, name: $name, description: $description, price: $price)';
   }
 }

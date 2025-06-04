@@ -3,4 +3,5 @@ export declare class Food {
     name: string;
     description: string;
     price: number;
+    image?: string;
 }

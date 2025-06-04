@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Food } from './food/food.entity';
-
 
 @Injectable()
 export class FoodService {
@@ -11,17 +10,19 @@ export class FoodService {
     private foodRepository: Repository<Food>,
   ) {}
 
-  create(data: Partial<Food>) {
+  async create(data: Partial<Food>) {
     const food = this.foodRepository.create(data);
-    return this.foodRepository.save(food);
+    return await this.foodRepository.save(food);
   }
 
-  findAll() {
-    return this.foodRepository.find();
+  async findAll() {
+    return await this.foodRepository.find();
   }
 
-  findOne(id: number) {
-    return this.foodRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    const food = await this.foodRepository.findOne({ where: { id } });
+    if (!food) throw new NotFoundException('Item não encontrado');
+    return food;
   }
 
   async update(id: number, data: Partial<Food>) {
@@ -29,7 +30,9 @@ export class FoodService {
     return this.findOne(id);
   }
 
-  delete(id: number) {
-    return this.foodRepository.delete(id);
+  async delete(id: number) {
+    const food = await this.findOne(id);
+    await this.foodRepository.delete(id);
+    return { message: 'Item deletado com sucesso', food };
   }
 }

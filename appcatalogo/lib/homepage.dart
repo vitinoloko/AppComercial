@@ -1,5 +1,3 @@
-import 'package:appcatalogo/page/other/grafico.dart';
-import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -20,13 +18,10 @@ class HomePage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          meuGrafico(),
-          TextButton(
-            onPressed: () {
-              context.beamToNamed('/mapa');
-            },
-            child: Text('hello world'),
-          ),
+          // Você pode colocar qualquer widget fixo aqui, por enquanto deixa vazio ou com texto
+          const SizedBox(height: 20),
+          const Text('Menu lateral'),
+          // etc
         ],
       ),
     );

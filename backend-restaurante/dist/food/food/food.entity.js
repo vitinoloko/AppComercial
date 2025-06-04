@@ -16,6 +16,7 @@ let Food = class Food {
     name;
     description;
     price;
+    image;
 };
 exports.Food = Food;
 __decorate([
@@ -34,6 +35,10 @@ __decorate([
     (0, typeorm_1.Column)('float'),
     __metadata("design:type", Number)
 ], Food.prototype, "price", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Food.prototype, "image", void 0);
 exports.Food = Food = __decorate([
     (0, typeorm_1.Entity)()
 ], Food);

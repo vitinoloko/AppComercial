@@ -2,43 +2,53 @@ import 'package:appcatalogo/homepage.dart';
 import 'package:appcatalogo/page/cadastro_produto/cadastro_formpage.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
 import 'package:appcatalogo/page/cadastro_produto/list_page.dart';
-import 'package:appcatalogo/page/other/grafico.dart';
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+// Imports mantidos iguais
+
 void main() {
   Get.put(FoodController());
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
-final Map<String, Widget> paginas = {
-  '/': ListPage(largura: 800),
-  '/Cadastro': CadastroFormpage(largura: 800),
-};
-
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+
+  final Map<String, Widget Function(double)> paginas = {
+    '/Interface': (largura) => ListPage(largura: largura),
+    '/Interface/Cadastro': (largura) => CadastroFormpage(largura: largura),
+  };
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return GetMaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerDelegate: BeamerDelegate(
-        initialPath: '/',
+        initialPath: '/Interface',
         locationBuilder: RoutesLocationBuilder(
           routes: {
-            // '/login': (context, state, data) => LoginApp(),
             for (var entry in paginas.entries)
-              entry.key: (context, state, data) => BeamPage(
-                child: TelaResponsiva(paginas: entry.value),
-                type: BeamPageType.fadeTransition,
-              ),
-            // '/mapa':
-            //     (context, state, data) => BeamPage(
-            //       child: MapaPage(),
-            //       type: BeamPageType.fadeTransition,
-            //     ),
+              entry.key: (context, state, data) {
+                return BeamPage(
+                  child: TelaResponsiva(
+                    paginas: entry.value(800), // widget da rota atual
+                    menuPaginas: paginas, // passando o mapa para o menu
+                  ),
+                  type: BeamPageType.fadeTransition,
+                );
+              },
+            '/Cadastro/:id': (context, state, data) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+              return BeamPage(
+                key: ValueKey('Cadastro-$id'),
+                child: TelaResponsiva(
+                  paginas: CadastroFormpage(largura: 800, id: id),
+                  menuPaginas: paginas, // mesmo mapa para o menu
+                ),
+              );
+            },
           },
         ).call,
       ),
@@ -49,8 +59,13 @@ class MyApp extends StatelessWidget {
 
 class TelaResponsiva extends StatelessWidget {
   final Widget paginas;
+  final Map<String, Widget Function(double)> menuPaginas;
 
-  const TelaResponsiva({super.key, required this.paginas});
+  const TelaResponsiva({
+    super.key,
+    required this.paginas,
+    required this.menuPaginas,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +73,7 @@ class TelaResponsiva extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: MediaQuery.of(context).size.width < 600
-            ? AppBar(backgroundColor: Colors.blueGrey[900])
+            ? AppBar(backgroundColor: Colors.blueGrey.shade900)
             : null,
         drawer: MediaQuery.of(context).size.width < 600
             ? Drawer(
@@ -67,7 +82,6 @@ class TelaResponsiva extends StatelessWidget {
                   child: ListView(
                     padding: EdgeInsets.zero,
                     children: [
-                      meuGrafico(),
                       ListTile(
                         leading: Icon(Icons.home, color: Colors.white),
                         title: Text(
@@ -75,7 +89,7 @@ class TelaResponsiva extends StatelessWidget {
                           style: TextStyle(color: Colors.white),
                         ),
                         onTap: () {
-                          context.beamToNamed('/');
+                          context.beamToNamed('/Interface');
                           Navigator.pop(context);
                         },
                       ),
@@ -89,7 +103,7 @@ class TelaResponsiva extends StatelessWidget {
                           style: TextStyle(color: Colors.white),
                         ),
                         onTap: () {
-                          context.beamToNamed('/Cadastro');
+                          context.beamToNamed('/Interface/Cadastro');
                           Navigator.pop(context);
                         },
                       ),
@@ -98,41 +112,46 @@ class TelaResponsiva extends StatelessWidget {
                 ),
               )
             : null,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            double width = constraints.maxWidth;
-            if (width > 1100) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 35),
-                child: Row(
+        body: Container(
+          decoration: BoxDecoration(),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              double width = constraints.maxWidth;
+              if (width > 1100) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 35),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      HomePage(
+                        largura: 280,
+                        paginas: menuPaginas.map(
+                          (key, func) => MapEntry(key, func(280)),
+                        ),
+                      ),
+                      paginas,
+                    ],
+                  ),
+                );
+              } else if (width > 600) {
+                return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    HomePage(largura: 280, paginas: {}),
-                    paginas,
+                    HomePage(
+                      largura: 280,
+                      paginas: menuPaginas.map(
+                        (key, func) => MapEntry(key, func(280)),
+                      ),
+                    ),
+                    Flexible(child: paginas),
                   ],
-                ),
-              );
-            } else if (width > 850) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  HomePage(largura: 280, paginas: {}),
-                  Flexible(child: paginas),
-                ],
-              );
-            } else if (width > 600) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  HomePage(largura: 280, paginas: {}),
-                  Flexible(child: paginas),
-                ],
-              );
-            } else {
-              // 📱 Celular: Só Drawer + página
-              return paginas;
-            }
-          },
+                );
+              } else {
+                // Celular: só drawer + página
+                return paginas;
+              }
+            },
+          ),
         ),
       ),
     );

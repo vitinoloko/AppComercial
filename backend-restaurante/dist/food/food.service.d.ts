@@ -5,7 +5,10 @@ export declare class FoodService {
     constructor(foodRepository: Repository<Food>);
     create(data: Partial<Food>): Promise<Food>;
     findAll(): Promise<Food[]>;
-    findOne(id: number): Promise<Food | null>;
-    update(id: number, data: Partial<Food>): Promise<Food | null>;
-    delete(id: number): Promise<import("typeorm").DeleteResult>;
+    findOne(id: number): Promise<Food>;
+    update(id: number, data: Partial<Food>): Promise<Food>;
+    delete(id: number): Promise<{
+        message: string;
+        food: Food;
+    }>;
 }
