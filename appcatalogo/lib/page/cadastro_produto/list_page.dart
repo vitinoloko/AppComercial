@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:appcatalogo/model/food_model.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
+import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -33,10 +36,11 @@ class ListPage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           itemCount: controller.foodList.length,
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 400,
+            maxCrossAxisExtent: 500,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 3 / 2,
+            childAspectRatio: 2,
+            mainAxisExtent: 170,
           ),
           itemBuilder: (context, index) {
             final food =
@@ -56,6 +60,41 @@ class FoodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget imageWidget;
+
+    if (food.image == null || food.image!.isEmpty) {
+      imageWidget = Image.network(
+        'https://via.placeholder.com/150',
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+      );
+    } else if (food.image!.startsWith('http')) {
+      imageWidget = Image.network(
+        food.image!,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+      );
+    } else {
+      try {
+        final bytes = base64Decode(food.image!);
+        imageWidget = Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          width: 120,
+          height: 120,
+        );
+      } catch (e) {
+        imageWidget = Image.network(
+          'https://via.placeholder.com/150',
+          fit: BoxFit.cover,
+          width: 120,
+          height: 120,
+        );
+      }
+    }
+
     final controller = Get.find<FoodController>();
 
     return Card(
@@ -65,24 +104,11 @@ class FoodCard extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         child: Row(
           children: [
-            // 🔸 Imagem do lado esquerdo
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.grey[300],
-                image: const DecorationImage(
-                  image: NetworkImage(
-                    'https://via.placeholder.com/150',
-                  ), // Substitua pela sua URL ou imagem local
-                  fit: BoxFit.cover,
-                ),
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: imageWidget,
             ),
             const SizedBox(width: 12),
-
-            // 🔸 Texto e informações
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +140,7 @@ class FoodCard extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         onPressed: () {
-                          // ação de editar
+                          context.beamToNamed('/Cadastro/${food.id}');
                         },
                       ),
                       IconButton(

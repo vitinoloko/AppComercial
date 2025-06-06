@@ -15,18 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FoodController = void 0;
 const common_1 = require("@nestjs/common");
 const food_service_1 = require("./food.service");
-const platform_express_1 = require("@nestjs/platform-express");
-const multer_1 = require("multer");
-const path_1 = require("path");
 let FoodController = class FoodController {
     foodService;
     constructor(foodService) {
         this.foodService = foodService;
     }
-    async create(file, data) {
-        if (file) {
-            data.image = `http://localhost:3000/uploads/${file.filename}`;
-        }
+    async create(data) {
         return this.foodService.create(data);
     }
     findAll() {
@@ -45,21 +39,9 @@ let FoodController = class FoodController {
 exports.FoodController = FoodController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
-        storage: (0, multer_1.diskStorage)({
-            destination: './uploads',
-            filename: (req, file, callback) => {
-                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                const ext = (0, path_1.extname)(file.originalname);
-                const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
-                callback(null, filename);
-            },
-        }),
-    })),
-    __param(0, (0, common_1.UploadedFile)()),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], FoodController.prototype, "create", null);
 __decorate([
@@ -76,7 +58,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], FoodController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Put)(':id'),
+    (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
