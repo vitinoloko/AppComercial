@@ -1,11 +1,16 @@
-import 'package:flutter/material.dart';
+import 'package:appcatalogo/const/const.dart';
+import 'package:beamer/beamer.dart';
+import 'package:flutter/material.dart' hide ExpansionTileController;
+import 'package:get/get.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key, required this.largura, required this.paginas});
+  HomePage({super.key, required this.largura, required this.paginas});
 
   final Map<String, Widget> paginas;
   final double largura;
-
+  final ExpansionTileController _expansionController = Get.put(
+    ExpansionTileController(),
+  );
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -20,8 +25,46 @@ class HomePage extends StatelessWidget {
         children: [
           // Você pode colocar qualquer widget fixo aqui, por enquanto deixa vazio ou com texto
           const SizedBox(height: 20),
-          const Text('Menu lateral'),
+
           // etc
+          Obx(() {
+            return ExpansionTile(
+              collapsedTextColor: Colors.white,
+              textColor: Colors.white,
+              iconColor: Color(0xFF4ACFD9),
+              collapsedIconColor: Colors.white,
+              title: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Icon(Icons.assignment),
+                    SizedBox(width: 7),
+                    Text(
+                      "Cadastro/Catalogo",
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              initiallyExpanded: _expansionController.isExpanded.value,
+              onExpansionChanged: (expanded) {
+                _expansionController.setExpanded(
+                  expanded,
+                ); // Atualiza o estado de expansão
+              },
+              children: [
+                botaointeracao('Catalogo', cadastroProdutoConst, () {
+                  context.beamToNamed('/Interface');
+                }, Icons.shopping_cart),
+                botaointeracao('Cadastro de Produto', cadastroProdutoConst, () {
+                  context.beamToNamed('/Interface/Cadastro');
+                }, Icons.add),
+              ],
+            );
+          }),
         ],
       ),
     );

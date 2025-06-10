@@ -16,10 +16,10 @@ export class FoodController {
   constructor(private readonly foodService: FoodService) {}
 
   // 🚩 CRIAR COM IMAGEM
- @Post()
-async create(@Body() data: Partial<Food>) {
-  return this.foodService.create(data);
-}
+  @Post()
+  async create(@Body() data: Partial<Food>) {
+   return this.foodService.create(data);
+  }
 
 
   @Get()

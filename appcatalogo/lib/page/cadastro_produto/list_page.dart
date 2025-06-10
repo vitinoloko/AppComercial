@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:appcatalogo/model/food_model.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
 import 'package:beamer/beamer.dart';
@@ -60,41 +59,6 @@ class FoodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget imageWidget;
-
-    if (food.image == null || food.image!.isEmpty) {
-      imageWidget = Image.network(
-        'https://via.placeholder.com/150',
-        fit: BoxFit.cover,
-        width: 120,
-        height: 120,
-      );
-    } else if (food.image!.startsWith('http')) {
-      imageWidget = Image.network(
-        food.image!,
-        fit: BoxFit.cover,
-        width: 120,
-        height: 120,
-      );
-    } else {
-      try {
-        final bytes = base64Decode(food.image!);
-        imageWidget = Image.memory(
-          bytes,
-          fit: BoxFit.cover,
-          width: 120,
-          height: 120,
-        );
-      } catch (e) {
-        imageWidget = Image.network(
-          'https://via.placeholder.com/150',
-          fit: BoxFit.cover,
-          width: 120,
-          height: 120,
-        );
-      }
-    }
-
     final controller = Get.find<FoodController>();
 
     return Card(
@@ -106,7 +70,7 @@ class FoodCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: imageWidget,
+              child: FoodImage(imageData: food.image),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -158,5 +122,51 @@ class FoodCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class FoodImage extends StatelessWidget {
+  final String? imageData;
+
+  const FoodImage({super.key, required this.imageData});
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageData == null || imageData!.isEmpty) {
+      return Container(
+        width: 120,
+        height: 120,
+        color: Colors.grey[300],
+        child: const Icon(Icons.fastfood, size: 48, color: Colors.grey),
+      );
+    }
+
+    if (imageData!.startsWith('http')) {
+      return Image.network(
+        imageData!,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+        gaplessPlayback: true,
+      );
+    }
+
+    try {
+      final bytes = base64Decode(imageData!);
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+        gaplessPlayback: true,
+      );
+    } catch (_) {
+      return Container(
+        width: 120,
+        height: 120,
+        color: Colors.grey[300],
+        child: const Icon(Icons.fastfood, size: 48, color: Colors.grey),
+      );
+    }
   }
 }

@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 class FoodController extends GetxController {
@@ -37,7 +36,6 @@ class FoodController extends GetxController {
 
     final originalBytes = await pickedFile.readAsBytes();
 
-    // Abre a tela de edição personalizada
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -77,7 +75,7 @@ class FoodController extends GetxController {
       final bytes = result.files.single.bytes;
       webImage.value = bytes;
       cellImage.value = result.files.single.path;
-      return bytes; // <-- RETORNO AQUI
+      return bytes;
     }
 
     return null;
@@ -125,7 +123,6 @@ class FoodController extends GetxController {
       );
 
       if (pickedFile == null) {
-        Get.snackbar('Aviso', 'Nenhuma imagem selecionada');
         return;
       }
 
@@ -134,24 +131,20 @@ class FoodController extends GetxController {
       Food food = Food(name: name, description: description, price: price);
 
       await addFoodWithImage(food, imageBytes);
-    } catch (e) {
-      Get.snackbar('Erro', 'Erro ao adicionar comida com imagem: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> addFoodWithImage(Food food, Uint8List imageBytes) async {
     try {
       isLoading.value = true;
 
-      // Constrói o objeto Food com a imagem codificada em base64
       final foodWithImage = Food(
         name: food.name,
         description: food.description,
         price: food.price,
-        image: base64Encode(imageBytes), // aqui é o segredo
+        image: base64Encode(imageBytes),
       );
 
-      // Envia o JSON do objeto Food já com imagem base64
       if (kDebugMode) {
         print('Base64 image length: ${foodWithImage.image?.length}');
       }
@@ -165,12 +158,8 @@ class FoodController extends GetxController {
       if (response.statusCode == 201) {
         final newFood = Food.fromJson(json.decode(response.body));
         foodList.add(newFood);
-        Get.snackbar('Sucesso', 'Produto cadastrado com imagem!');
-      } else {
-        Get.snackbar('Erro', 'Falha ao cadastrar: ${response.body}');
       }
     } catch (e) {
-      Get.snackbar('Erro', 'Erro ao cadastrar: $e');
     } finally {
       isLoading.value = false;
     }
@@ -217,13 +206,9 @@ class FoodController extends GetxController {
         int index = foodList.indexWhere((e) => e.id == food.id);
         if (index != -1) {
           foodList[index] = updatedFood;
-          Get.snackbar('Sucesso', 'Comida atualizada com imagem');
         }
-      } else {
-        Get.snackbar('Erro', 'Erro ao atualizar imagem: ${response.body}');
       }
     } catch (e) {
-      Get.snackbar('Erro', 'Erro ao atualizar: $e');
     } finally {
       isLoading.value = false;
     }
@@ -250,11 +235,9 @@ class FoodController extends GetxController {
         final data = json.decode(response.body);
         return Food.fromJson(data);
       } else {
-        Get.snackbar('Erro', 'Falha ao buscar comida com id $id');
         return null;
       }
     } catch (e) {
-      Get.snackbar('Erro', 'Erro ao buscar comida: $e');
       return null;
     } finally {
       isLoading.value = false;
