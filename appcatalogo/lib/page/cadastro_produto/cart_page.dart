@@ -22,9 +22,14 @@ class CartPage extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-            color: Colors.blueGrey[700],
+            width: largura,
+            decoration: BoxDecoration(
+              color: Colors.blueGrey[800],
+              borderRadius: MediaQuery.of(context).size.width < 1100
+                  ? const BorderRadius.horizontal(right: Radius.circular(0))
+                  : const BorderRadius.horizontal(right: Radius.circular(12)),
+            ),
+            padding: EdgeInsets.symmetric(vertical: 10),
             child: const Text(
               'Meu Carrinho',
               style: TextStyle(
@@ -67,6 +72,7 @@ class CartPage extends StatelessWidget {
                   final itemTotalPrice = item.price * item.quantity;
 
                   return Card(
+                    key: ValueKey(item.id),
                     margin: const EdgeInsets.symmetric(
                       vertical: 8.0,
                       horizontal: 4.0,
@@ -150,7 +156,7 @@ class CartPage extends StatelessWidget {
                                   size: 20,
                                 ), // Tamanho reduzido
                                 onPressed: () {
-                                  if (item.quantity > 0) {
+                                  if (item.quantity > 1) {
                                     cartController.updateItemQuantity(
                                       item.id,
                                       item.quantity - 1,

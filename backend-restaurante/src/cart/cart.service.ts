@@ -1,3 +1,5 @@
+// backend-restaurante/src/cart/cart.service.ts
+
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,36 +19,28 @@ export class CartService {
     private foodService: FoodService,
   ) {}
 
-  // CORREÇÃO ESSENCIAL: Garante que findOne sempre tenha uma condição
-  // Ou encontra o primeiro carrinho (provisório para desenvolvimento)
-  // Ou cria um novo se não houver nenhum.
   async getOrCreateCart(): Promise<Cart> {
-    // Tenta encontrar o primeiro carrinho existente.
-    // O TypeORM 0.3+ exige uma condição para findOne. findOneBy({}) é uma forma de buscar "o primeiro".
-    let cart = await this.cartRepository.findOneBy({}); // <--- ALTERAÇÃO CRUCIAL AQUI!
+    let cart = await this.cartRepository.findOneBy({});
 
     if (cart) {
-      // Se um carrinho foi encontrado, recarregue-o com suas relações
-      // para garantir que 'items' e 'items.product' estejam populados.
+      // Modificado: Adicionado order aqui
       cart = await this.cartRepository.findOne({
         where: { id: cart.id },
-        relations: ['items', 'items.product']
+        relations: ['items', 'items.product'],
+        order: { items: { id: 'ASC' } } // <--- ADICIONADO A ORDEM!
       });
-      // Se por algum motivo ele ainda for null aqui, algo está errado,
-      // mas a lógica abaixo tratará isso.
     }
 
     if (!cart) {
-      // Se nenhum carrinho foi encontrado ou se o recarregamento falhou, cria um novo.
       cart = this.cartRepository.create();
       await this.cartRepository.save(cart);
 
-      // Recarrega o carrinho recém-criado para garantir as relações (mesmo que vazias por enquanto)
+      // Modificado: Adicionado order aqui para o carrinho recém-criado
       cart = await this.cartRepository.findOne({
         where: { id: cart.id },
-        relations: ['items', 'items.product']
+        relations: ['items', 'items.product'],
+        order: { items: { id: 'ASC' } } // <--- ADICIONADO A ORDEM!
       });
-      // Se ainda for null aqui, lançar um erro ou tratar como um problema grave.
       if (!cart) {
         throw new Error("Falha catastrófica: Carrinho recém-criado não foi encontrado.");
       }
@@ -82,9 +76,11 @@ export class CartService {
       await this.cartItemRepository.save(cartItem);
     }
 
+    // Modificado: Adicionado order aqui
     const updatedCart = await this.cartRepository.findOne({
       where: { id: cart.id },
-      relations: ['items']
+      relations: ['items'],
+      order: { items: { id: 'ASC' } } // <--- ADICIONADO A ORDEM!
     });
     if (!updatedCart) {
       throw new NotFoundException('Carrinho não encontrado após atualização de item.');
@@ -108,9 +104,11 @@ export class CartService {
     cartItem.quantity = quantity;
     await this.cartItemRepository.save(cartItem);
 
+    // Modificado: Adicionado order aqui
     const updatedCart = await this.cartRepository.findOne({
       where: { id: cartItem.cart.id },
-      relations: ['items']
+      relations: ['items'],
+      order: { items: { id: 'ASC' } } // <--- ADICIONADO A ORDEM!
     });
     if (!updatedCart) {
       throw new NotFoundException('Carrinho não encontrado após atualização de quantidade.');
@@ -128,14 +126,14 @@ export class CartService {
     const cartId = cartItem.cart.id;
     await this.cartItemRepository.remove(cartItem);
 
+    // Modificado: Adicionado order aqui
     const updatedCart = await this.cartRepository.findOne({
       where: { id: cartId },
-      relations: ['items']
+      relations: ['items'],
+      order: { items: { id: 'ASC' } } // <--- ADICIONADO A ORDEM!
     });
 
     if (!updatedCart) {
-      // Se o carrinho foi o último item e o carrinho não deve mais existir (cenário raro)
-      // Você pode retornar um novo carrinho vazio ou lançar um erro específico.
       return this.cartRepository.create({ id: cartId, totalAmount: 0, items: [] });
     }
 
@@ -145,27 +143,26 @@ export class CartService {
 
   async getCart(): Promise<Cart> {
     const cart = await this.getOrCreateCart();
-    // Garante que os itens e os detalhes do produto dentro dos itens sejam carregados
+    // Modificado: Adicionado order aqui
     const foundCart = await this.cartRepository.findOne({
       where: { id: cart.id },
-      relations: ['items', 'items.product']
+      relations: ['items', 'items.product'],
+      order: { items: { id: 'ASC' } } // <--- ADICIONADO A ORDEM!
     });
 
     if (!foundCart) {
-      // Em um cenário onde o carrinho é criado, mas não encontrado imediatamente,
-      // podemos retornar um carrinho vazio ou lançar um erro mais específico.
-      // Aqui, vamos retornar um carrinho vazio para evitar um crash no frontend.
       return this.cartRepository.create({ id: cart.id, totalAmount: 0, items: [] });
     }
 
     return foundCart;
   }
 
-  // CORREÇÃO ESSENCIAL: Garante que 'cart.items' sempre seja um array válido.
   private async calculateCartTotal(cart: Cart): Promise<void> {
+    // Modificado: Adicionado order aqui
     const currentCartWithItems = await this.cartRepository.findOne({
       where: { id: cart.id },
-      relations: ['items'] // Garante que os itens sejam carregados
+      relations: ['items'],
+      order: { items: { id: 'ASC' } } // <--- ADICIONADO A ORDEM!
     });
 
     if (currentCartWithItems) {

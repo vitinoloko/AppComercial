@@ -4,6 +4,7 @@ import 'package:appcatalogo/model/food_model.dart';
 import 'package:appcatalogo/page/cadastro_produto/cart_controller.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
 import 'package:beamer/beamer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -102,14 +103,18 @@ class FoodCard extends StatelessWidget {
               onPressed: () async {
                 if (food.id == null) {
                   // Debug: Verifique se o ID da comida é nulo. Não deveria ser para adicionar.
-                  print(
-                    'ERRO: Food ID é nulo ao tentar adicionar ao carrinho!',
-                  );
+                  if (kDebugMode) {
+                    print(
+                      'ERRO: Food ID é nulo ao tentar adicionar ao carrinho!',
+                    );
+                  }
                   return;
                 }
-                print(
-                  'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho...',
-                );
+                if (kDebugMode) {
+                  print(
+                    'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho...',
+                  );
+                }
                 await cartController.addItemToCart(food.id!, 1);
                 Navigator.of(ctx).pop();
                 // Verifique no console se esta snackbar aparece
@@ -125,6 +130,7 @@ class FoodCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foodController = Get.find<FoodController>();
+    final cartController = Get.find<CartController>();
 
     return GestureDetector(
       onTap: () => _showFoodDetails(context),
@@ -175,8 +181,9 @@ class FoodCard extends StatelessWidget {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            foodController.deleteFood(food.id!);
+                          onPressed: () async {
+                            await foodController.deleteFood(food.id!);
+                            await cartController.fetchCart();
                           },
                         ),
                         IconButton(
@@ -187,14 +194,18 @@ class FoodCard extends StatelessWidget {
                           onPressed: () async {
                             if (food.id == null) {
                               // Debug: Verifique se o ID da comida é nulo.
-                              print(
-                                'ERRO: Food ID é nulo ao tentar adicionar ao carrinho diretamente!',
-                              );
+                              if (kDebugMode) {
+                                print(
+                                  'ERRO: Food ID é nulo ao tentar adicionar ao carrinho diretamente!',
+                                );
+                              }
                               return;
                             }
-                            print(
-                              'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho diretamente...',
-                            );
+                            if (kDebugMode) {
+                              print(
+                                'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho diretamente...',
+                              );
+                            }
                             final cartController = Get.find<CartController>();
                             await cartController.addItemToCart(food.id!, 1);
                           },

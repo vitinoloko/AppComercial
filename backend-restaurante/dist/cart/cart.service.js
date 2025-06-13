@@ -33,7 +33,8 @@ let CartService = class CartService {
         if (cart) {
             cart = await this.cartRepository.findOne({
                 where: { id: cart.id },
-                relations: ['items', 'items.product']
+                relations: ['items', 'items.product'],
+                order: { items: { id: 'ASC' } }
             });
         }
         if (!cart) {
@@ -41,7 +42,8 @@ let CartService = class CartService {
             await this.cartRepository.save(cart);
             cart = await this.cartRepository.findOne({
                 where: { id: cart.id },
-                relations: ['items', 'items.product']
+                relations: ['items', 'items.product'],
+                order: { items: { id: 'ASC' } }
             });
             if (!cart) {
                 throw new Error("Falha catastrófica: Carrinho recém-criado não foi encontrado.");
@@ -77,7 +79,8 @@ let CartService = class CartService {
         }
         const updatedCart = await this.cartRepository.findOne({
             where: { id: cart.id },
-            relations: ['items']
+            relations: ['items'],
+            order: { items: { id: 'ASC' } }
         });
         if (!updatedCart) {
             throw new common_1.NotFoundException('Carrinho não encontrado após atualização de item.');
@@ -98,7 +101,8 @@ let CartService = class CartService {
         await this.cartItemRepository.save(cartItem);
         const updatedCart = await this.cartRepository.findOne({
             where: { id: cartItem.cart.id },
-            relations: ['items']
+            relations: ['items'],
+            order: { items: { id: 'ASC' } }
         });
         if (!updatedCart) {
             throw new common_1.NotFoundException('Carrinho não encontrado após atualização de quantidade.');
@@ -115,7 +119,8 @@ let CartService = class CartService {
         await this.cartItemRepository.remove(cartItem);
         const updatedCart = await this.cartRepository.findOne({
             where: { id: cartId },
-            relations: ['items']
+            relations: ['items'],
+            order: { items: { id: 'ASC' } }
         });
         if (!updatedCart) {
             return this.cartRepository.create({ id: cartId, totalAmount: 0, items: [] });
@@ -127,7 +132,8 @@ let CartService = class CartService {
         const cart = await this.getOrCreateCart();
         const foundCart = await this.cartRepository.findOne({
             where: { id: cart.id },
-            relations: ['items', 'items.product']
+            relations: ['items', 'items.product'],
+            order: { items: { id: 'ASC' } }
         });
         if (!foundCart) {
             return this.cartRepository.create({ id: cart.id, totalAmount: 0, items: [] });
@@ -137,7 +143,8 @@ let CartService = class CartService {
     async calculateCartTotal(cart) {
         const currentCartWithItems = await this.cartRepository.findOne({
             where: { id: cart.id },
-            relations: ['items']
+            relations: ['items'],
+            order: { items: { id: 'ASC' } }
         });
         if (currentCartWithItems) {
             cart.items = currentCartWithItems.items || [];

@@ -23,6 +23,16 @@ class HomePage extends StatelessWidget {
       ),
       child: Column(
         children: [
+          Container(
+            width: 280,
+            height: 150,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('images/aaaa.png'),
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
           // Você pode colocar qualquer widget fixo aqui, por enquanto deixa vazio ou com texto
           const SizedBox(height: 20),
 
@@ -63,7 +73,7 @@ class HomePage extends StatelessWidget {
                   context.beamToNamed('/Interface/Cadastro');
                 }, Icons.add),
                 botaoIcons('Carrinho', cadastroProdutoConst, () {
-                  context.beamToNamed('/Interface/Cadastro/Cart');
+                  context.beamToNamed('/Cart');
                 }, Icons.shopping_cart),
               ],
             );

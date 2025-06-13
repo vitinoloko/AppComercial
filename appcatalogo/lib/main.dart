@@ -22,7 +22,6 @@ class MyApp extends StatelessWidget {
   final Map<String, Widget Function(double)> paginas = {
     '/Interface': (largura) => ListPage(largura: largura),
     '/Interface/Cadastro': (largura) => CadastroFormpage(largura: largura),
-    '/Interface/Cadastro/Cart': (largura) => CartPage(largura: largura),
   };
 
   @override
@@ -53,6 +52,15 @@ class MyApp extends StatelessWidget {
                 ),
               );
             },
+            //   Se você definiu uma rota '/cart' separada, adicione-a aqui
+            // Exemplo:
+            '/Cart': (context, state, data) => BeamPage(
+              key: ValueKey('cart_page_route'),
+              child: TelaResponsiva(
+                paginas: CartPage(largura: 800),
+                menuPaginas: paginas,
+              ),
+            ),
           },
         ).call,
       ),
@@ -73,6 +81,7 @@ class TelaResponsiva extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cartController = Get.find<CartController>();
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -87,8 +96,11 @@ class TelaResponsiva extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     children: [
                       ListTile(
-                        leading: Icon(Icons.shopping_cart, color: Colors.white),
-                        title: Text(
+                        leading: const Icon(
+                          Icons.shopping_bag_sharp,
+                          color: Colors.white,
+                        ), // Este ícone é genérico, não é do carrinho
+                        title: const Text(
                           'Catalogo',
                           style: TextStyle(color: Colors.white),
                         ),
@@ -98,8 +110,8 @@ class TelaResponsiva extends StatelessWidget {
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.add, color: Colors.white),
-                        title: Text(
+                        leading: const Icon(Icons.add, color: Colors.white),
+                        title: const Text(
                           'Cadastro de Produto',
                           style: TextStyle(color: Colors.white),
                         ),
@@ -107,6 +119,30 @@ class TelaResponsiva extends StatelessWidget {
                           context.beamToNamed('/Interface/Cadastro');
                           Navigator.pop(context);
                         },
+                      ),
+                      Obx(
+                        // Obx para reagir a cartController.cartItemCount
+                        () => ListTile(
+                          leading: Badge.count(
+                            count: cartController
+                                .cartItemCount, // <--- REMOVIDO .bitLength!
+                            isLabelVisible:
+                                cartController.cartItemCount >
+                                0, // Opcional: Só mostra se > 0
+                            child: const Icon(
+                              Icons.shopping_cart,
+                              color: Colors.white,
+                            ),
+                          ),
+                          title: const Text(
+                            'Carrinho',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          onTap: () {
+                            context.beamToNamed('/Cart');
+                            Navigator.pop(context);
+                          },
+                        ),
                       ),
                     ],
                   ),

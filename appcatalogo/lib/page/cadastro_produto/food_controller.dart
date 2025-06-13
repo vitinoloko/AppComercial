@@ -3,95 +3,130 @@ import 'package:appcatalogo/model/extendedimageeditor.dart';
 import 'package:appcatalogo/model/food_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'; // Importe para TextEditingController, MoneyMaskedTextController
+import 'package:flutter/material.dart'; // Importe para TextEditingController
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart'; // Para MoneyMaskedTextController
 
 class FoodController extends GetxController {
   var foodList = <Food>[].obs;
   var isLoading = false.obs; // Para a lista de comidas
 
-  // --- NOVAS VARIÁVEIS REATIVAS PARA O FORMULÁRIO DE CADASTRO/EDIÇÃO ---
-  var foodName = ''.obs;
+  // --- CONTROLADORES DE TEXTO MOVIDOS PARA O CONTROLLER ---
+  // Eles precisam ser acessíveis globalmente e manter o estado
+  late TextEditingController nameTextController;
+  late TextEditingController descriptionTextController;
+  late MoneyMaskedTextController priceMaskedController;
+
+  var foodName = ''
+      .obs; // Apenas para reatividade interna ou se precisar de Obx nos TextFields
   var foodDescription = ''.obs;
   var foodPrice = 0.0.obs;
-  var currentEditingFoodId = Rx<int?>(
-    null,
-  ); // Armazena o ID do item que está sendo editado
+  var currentEditingFoodId = Rx<int?>(null);
 
-  var webImage = Rx<Uint8List?>(null); // Imagem para cadastro/edição
-  var cellImage = Rx<String?>(null); // Mantenha se ainda usa para mobile (path)
-  var mostrarEditor = false.obs; // Para o editor de imagem
+  var webImage = Rx<Uint8List?>(null);
+  var cellImage = Rx<String?>(null);
+  var mostrarEditor = false.obs;
 
-  // Usaremos 'dadosCarregadosForm' para o estado de carregamento do FORMULÁRIO
-  // para não confundir com isLoading (da lista de comidas)
-  var dadosCarregadosForm = false.obs;
+  var dadosCarregadosForm =
+      false.obs; // Para o estado de carregamento do FORMULÁRIO
 
   final String baseUrl = 'http://localhost:3000/foods';
 
   @override
   void onInit() {
-    fetchFoods(); // Carrega a lista de comidas ao iniciar o app
     super.onInit();
+    // Inicializa os controladores de texto aqui, uma única vez
+    nameTextController = TextEditingController();
+    descriptionTextController = TextEditingController();
+    priceMaskedController = MoneyMaskedTextController(
+      initialValue: 0.0,
+      leftSymbol: 'R\$ ',
+      decimalSeparator: ',',
+      thousandSeparator: '.',
+    );
+
+    // Opcional: Adiciona listeners aqui para atualizar as variáveis Rx
+    // Isso pode ser útil se você precisar que os dados do formulário
+    // estejam nas variáveis Rx em tempo real para outras lógicas.
+    nameTextController.addListener(
+      () => foodName.value = nameTextController.text,
+    );
+    descriptionTextController.addListener(
+      () => foodDescription.value = descriptionTextController.text,
+    );
+    priceMaskedController.addListener(
+      () => foodPrice.value = priceMaskedController.numberValue,
+    );
+
+    fetchFoods(); // Carrega a lista de comidas ao iniciar o app
   }
 
-  // --- NOVO MÉTODO PARA CARREGAR DADOS DO FORMULÁRIO DE EDIÇÃO ---
+  @override
+  void onClose() {
+    // Descarte os controladores quando o controller for fechado
+    nameTextController.dispose();
+    descriptionTextController.dispose();
+    priceMaskedController.dispose();
+    super.onClose();
+  }
+
   Future<void> loadFoodForEditing(int? id) async {
     // Se o ID for o mesmo e os dados já estiverem carregados, evita recarregar
     if (currentEditingFoodId.value == id && dadosCarregadosForm.isTrue) {
-      print(
-        'DEBUG: loadFoodForEditing - Dados já carregados para ID $id. Pulando recarga.',
-      );
+      if (kDebugMode) {
+        print(
+          'DEBUG: loadFoodForEditing - Dados já carregados para ID $id. Pulando recarga.',
+        );
+      }
       return;
     }
 
-    print('DEBUG: loadFoodForEditing - Iniciando carga para ID: $id');
-    dadosCarregadosForm.value =
-        false; // Começa o indicador de carregamento do formulário
-    currentEditingFoodId.value = id; // Atualiza o ID do item sendo editado
+    if (kDebugMode) {
+      print('DEBUG: loadFoodForEditing - Iniciando carga para ID: $id');
+    }
+    dadosCarregadosForm.value = false;
+    currentEditingFoodId.value = id;
 
-    // Limpa os dados atuais nos observáveis do controller
-    foodName.value = '';
-    foodDescription.value = '';
-    foodPrice.value = 0.0;
-    webImage.value = null; // Limpa a imagem também
+    // Limpa os controladores de texto e imagem
+    nameTextController.clear();
+    descriptionTextController.clear();
+    priceMaskedController.updateValue(0.0);
+    webImage.value = null;
 
     if (id != null && id != 0) {
-      final food = await getFoodById(
-        id,
-      ); // Usa o método existente para buscar a comida
+      final food = await getFoodById(id);
       if (food != null) {
-        print('DEBUG: Food ID $id encontrado: ${food.name}');
-        foodName.value = food.name;
-        foodDescription.value = food.description;
-        foodPrice.value = food.price;
+        if (kDebugMode) print('DEBUG: Food ID $id encontrado: ${food.name}');
+        nameTextController.text = food.name;
+        descriptionTextController.text = food.description;
+        priceMaskedController.updateValue(
+          food.price,
+        ); // Usa updateValue para MoneyMaskedTextController
+
         if (food.image != null && food.image!.isNotEmpty) {
           try {
             webImage.value = base64Decode(food.image!);
-            print(
-              'DEBUG: Imagem Base64 decodificada para ID $id, tamanho: ${webImage.value?.length} bytes',
-            );
           } catch (e) {
-            print(
-              'ERRO: Não foi possível decodificar a imagem Base64 para ID $id: $e',
-            );
+            if (kDebugMode) {
+              print(
+                'ERRO: loadFoodForEditing - Não foi possível decodificar imagem Base64 para ID $id: $e',
+              );
+            }
             webImage.value = null;
           }
         }
       } else {
-        print('AVISO: Item com ID $id NÃO ENCONTRADO no backend para edição.');
+        if (kDebugMode) {
+          print(
+            'AVISO: loadFoodForEditing - Item com ID $id NÃO ENCONTRADO no backend para edição.',
+          );
+        }
       }
-    } else {
-      print(
-        'DEBUG: Preparando para NOVO cadastro (ID é nulo/zero), limpando campos.',
-      );
     }
-    dadosCarregadosForm.value = true; // Finaliza o carregamento do formulário
-    print('DEBUG: loadFoodForEditing - Carga finalizada para ID: $id');
+    dadosCarregadosForm.value = true;
   }
-
-  // --- MÉTODOS EXISTENTES (AJUSTADOS PARA USAR AS NOVAS VARIÁVEIS REATIVAS) ---
 
   Future<Uint8List?> pickAndEditImageComEditorCustom(
     BuildContext context,
@@ -135,16 +170,23 @@ class FoodController extends GetxController {
       final bytes = result.files.single.bytes;
       webImage.value = bytes;
       cellImage.value = result.files.single.path;
+      if (kDebugMode) {
+        print(
+          'DEBUG: pickImage - Tamanho da imagem selecionada (bytes): ${bytes!.length}',
+        );
+      }
       return bytes;
     }
     return null;
   }
 
-  // Métodos de CRUD para a lista de comidas
   Future<void> fetchFoods() async {
     try {
       isLoading.value = true;
       final response = await http.get(Uri.parse(baseUrl));
+      if (kDebugMode) {
+        print('DEBUG: fetchFoods - Status: ${response.statusCode}');
+      }
       if (response.statusCode == 200) {
         List data = json.decode(response.body);
         foodList.value = data.map((e) => Food.fromJson(e)).toList();
@@ -154,15 +196,18 @@ class FoodController extends GetxController {
     }
   }
 
-  // AJUSTADO: Usa as variáveis reativas do controller
   Future<void> addFood() async {
+    if (kDebugMode) {
+      print(
+        'DEBUG: addFood - Adicionando nova comida: ${nameTextController.text}',
+      );
+    }
     try {
-      isLoading.value =
-          true; // Pode usar outra variável de loading para o formulário se preferir
+      isLoading.value = true;
       final food = Food(
-        name: foodName.value,
-        description: foodDescription.value,
-        price: foodPrice.value,
+        name: nameTextController.text, // Usa o valor do controller direto
+        description: descriptionTextController.text,
+        price: priceMaskedController.numberValue,
       );
       final response = await http.post(
         Uri.parse(baseUrl),
@@ -172,10 +217,15 @@ class FoodController extends GetxController {
       if (response.statusCode == 201) {
         final newFood = Food.fromJson(json.decode(response.body));
         foodList.add(newFood);
-        // Limpa os campos após adicionar (opcional, dependendo do UX)
-        foodName.value = '';
-        foodDescription.value = '';
-        foodPrice.value = 0.0;
+        if (kDebugMode) {
+          print(
+            'DEBUG: addFood - Sucesso: Comida adicionada (ID: ${newFood.id})',
+          );
+        }
+        // Limpa os campos após adicionar
+        nameTextController.clear();
+        descriptionTextController.clear();
+        priceMaskedController.updateValue(0.0);
         webImage.value = null;
       }
     } finally {
@@ -183,20 +233,20 @@ class FoodController extends GetxController {
     }
   }
 
-  // AJUSTADO: Usa as variáveis reativas do controller
   Future<void> addFoodWithImage() async {
+    if (kDebugMode) {
+      print(
+        'DEBUG: addFoodWithImage - Adicionando nova comida com imagem: ${nameTextController.text}',
+      );
+    }
     try {
-      isLoading.value = true; // Pode usar outra variável de loading
+      isLoading.value = true;
       final foodWithImage = Food(
-        name: foodName.value,
-        description: foodDescription.value,
-        price: foodPrice.value,
+        name: nameTextController.text,
+        description: descriptionTextController.text,
+        price: priceMaskedController.numberValue,
         image: webImage.value != null ? base64Encode(webImage.value!) : null,
       );
-
-      if (kDebugMode) {
-        print('Base64 image length: ${foodWithImage.image?.length}');
-      }
 
       final response = await http.post(
         Uri.parse(baseUrl),
@@ -207,28 +257,38 @@ class FoodController extends GetxController {
       if (response.statusCode == 201) {
         final newFood = Food.fromJson(json.decode(response.body));
         foodList.add(newFood);
-        // Limpa os campos após adicionar (opcional)
-        foodName.value = '';
-        foodDescription.value = '';
-        foodPrice.value = 0.0;
+        if (kDebugMode) {
+          print(
+            'DEBUG: addFoodWithImage - Sucesso: Comida com imagem adicionada (ID: ${newFood.id})',
+          );
+        }
+        nameTextController.clear();
+        descriptionTextController.clear();
+        priceMaskedController.updateValue(0.0);
         webImage.value = null;
       }
     } catch (e) {
-      if (kDebugMode) print('Error adding food with image: $e');
+      if (kDebugMode) {
+        print(
+          'ERRO: addFoodWithImage - Falha ao adicionar comida com imagem: $e',
+        );
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
-  // AJUSTADO: Usa as variáveis reativas do controller
   Future<void> updateFood(int idToUpdate) async {
+    if (kDebugMode) {
+      print('DEBUG: updateFood - Atualizando comida ID: $idToUpdate');
+    }
     try {
       isLoading.value = true;
       final updatedFood = Food(
         id: idToUpdate,
-        name: foodName.value,
-        description: foodDescription.value,
-        price: foodPrice.value,
+        name: nameTextController.text,
+        description: descriptionTextController.text,
+        price: priceMaskedController.numberValue,
       );
       final response = await http.patch(
         Uri.parse('$baseUrl/$idToUpdate'),
@@ -240,21 +300,30 @@ class FoodController extends GetxController {
         if (index != -1) {
           foodList[index] = updatedFood;
         }
+        if (kDebugMode) {
+          print(
+            'DEBUG: updateFood - Sucesso: Comida ID $idToUpdate atualizada.',
+          );
+        }
       }
     } finally {
       isLoading.value = false;
     }
   }
 
-  // AJUSTADO: Usa as variáveis reativas do controller
   Future<void> updateFoodWithImage(int idToUpdate) async {
+    if (kDebugMode) {
+      print(
+        'DEBUG: updateFoodWithImage - Atualizando comida com imagem ID: $idToUpdate',
+      );
+    }
     try {
       isLoading.value = true;
       final updatedFood = Food(
         id: idToUpdate,
-        name: foodName.value,
-        description: foodDescription.value,
-        price: foodPrice.value,
+        name: nameTextController.text,
+        description: descriptionTextController.text,
+        price: priceMaskedController.numberValue,
         image: webImage.value != null ? base64Encode(webImage.value!) : null,
       );
 
@@ -269,48 +338,60 @@ class FoodController extends GetxController {
         if (index != -1) {
           foodList[index] = updatedFood;
         }
+        if (kDebugMode) {
+          print(
+            'DEBUG: updateFoodWithImage - Sucesso: Comida com imagem ID $idToUpdate atualizada.',
+          );
+        }
       }
     } catch (e) {
-      if (kDebugMode) print('Error updating food with image: $e');
+      if (kDebugMode) {
+        print(
+          'ERRO: updateFoodWithImage - Falha ao atualizar comida com imagem: $e',
+        );
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<void> deleteFood(int id) async {
+    if (kDebugMode) print('DEBUG: deleteFood - Excluindo comida ID: $id');
     try {
       isLoading.value = true;
       final response = await http.delete(Uri.parse('$baseUrl/$id'));
       if (response.statusCode == 200 || response.statusCode == 204) {
         foodList.removeWhere((item) => item.id == id);
+        if (kDebugMode) {
+          print('DEBUG: deleteFood - Sucesso: Comida ID $id deletada.');
+        }
       }
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Este método já estava ok
   Future<Food?> getFoodById(int id) async {
+    if (kDebugMode) {
+      print('DEBUG: getFoodById - Tentando buscar Food com ID: $id');
+    }
     try {
-      isLoading.value = true; // ou uma variável de loading mais específica
-      print('DEBUG: Tentando buscar Food com ID: $id');
+      isLoading.value = true;
       final response = await http.get(Uri.parse('$baseUrl/$id'));
-
-      print('DEBUG: getFoodById - Status Code: ${response.statusCode}');
-      print('DEBUG: getFoodById - Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('DEBUG: getFoodById - Dados JSON decodificados: $data');
         return Food.fromJson(data);
       } else {
-        print(
-          'ERRO: getFoodById - Falha ao buscar item: ${response.statusCode}',
-        );
+        if (kDebugMode) {
+          print(
+            'ERRO: getFoodById - Falha ao buscar item ID $id: ${response.statusCode}',
+          );
+        }
         return null;
       }
     } catch (e) {
-      print('ERRO CATCH: getFoodById - Exceção: $e');
+      if (kDebugMode) print('ERRO CATCH: getFoodById - Exceção: $e');
       return null;
     } finally {
       isLoading.value = false;
