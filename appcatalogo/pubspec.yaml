@@ -50,6 +50,9 @@ dependencies:
   image_editor: ^1.6.0
   extended_image: ^10.0.1
 
+
+  flutter_map: ^8.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

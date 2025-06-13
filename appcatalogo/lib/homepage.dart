@@ -58,10 +58,13 @@ class HomePage extends StatelessWidget {
               children: [
                 botaointeracao('Catalogo', cadastroProdutoConst, () {
                   context.beamToNamed('/Interface');
-                }, Icons.shopping_cart),
+                }, Icons.shopping_bag_sharp),
                 botaointeracao('Cadastro de Produto', cadastroProdutoConst, () {
                   context.beamToNamed('/Interface/Cadastro');
                 }, Icons.add),
+                botaoIcons('Carrinho', cadastroProdutoConst, () {
+                  context.beamToNamed('/Interface/Cadastro/Cart');
+                }, Icons.shopping_cart),
               ],
             );
           }),

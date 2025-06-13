@@ -20,6 +20,7 @@ exports.FoodModule = FoodModule = __decorate([
         imports: [typeorm_1.TypeOrmModule.forFeature([food_entity_1.Food])],
         controllers: [food_controller_1.FoodController],
         providers: [food_service_1.FoodService],
+        exports: [food_service_1.FoodService]
     })
 ], FoodModule);
 //# sourceMappingURL=food.module.js.map

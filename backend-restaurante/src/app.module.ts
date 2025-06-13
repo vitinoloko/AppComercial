@@ -4,6 +4,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
 import { FoodModule } from './food/food.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { FoodModule } from './food/food.module';
 
     // 🔥 Módulos da aplicação
     FoodModule,
+    CartModule
 
   ],
 })

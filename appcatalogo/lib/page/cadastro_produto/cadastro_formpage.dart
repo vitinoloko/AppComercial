@@ -1,215 +1,221 @@
-// Importações necessárias
-import 'dart:convert'; // Para conversão de imagens base64
-import 'package:appcatalogo/model/extendedimageeditor.dart'; // Editor de imagem
-import 'package:appcatalogo/model/food_model.dart'; // Modelo da comida
-import 'package:appcatalogo/page/cadastro_produto/food_controller.dart'; // Controller com a lógica
-import 'package:beamer/beamer.dart'; // Navegação
+import 'package:appcatalogo/const/const.dart';
+import 'package:appcatalogo/model/extendedimageeditor.dart';
+import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
+import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // Gerenciamento de estado
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
+import 'package:get/get.dart';
 
-// Componente Stateless do formulário de cadastro/edição
+// MUDANÇA: AGORA É UM STATELESSWIDGET
 class CadastroFormpage extends StatelessWidget {
-  final double largura; // Largura do componente
-  final int? id; // ID do item, se for edição
+  final double largura;
+  final int? id;
 
-  CadastroFormpage({super.key, required this.largura, this.id});
-
-  // Instancia o controller já criado no GetX
-  final FoodController controller = Get.find();
-
-  // Controladores para os campos de texto
-  final nameController = TextEditingController();
-  final descriptionController = TextEditingController();
-  final priceController = TextEditingController();
-
-  // Carrega os dados do item se estiver editando
-  Future<void> carregarDados() async {
-    if (id != null && id != 0) {
-      final food = await controller.getFoodById(id!); // Busca item pelo ID
-      if (food != null) {
-        // Preenche os campos com os dados existentes
-        nameController.text = food.name;
-        descriptionController.text = food.description;
-        priceController.text = food.price.toString();
-
-        // Se houver imagem, converte de base64 e define no estado
-        if (food.image != null) {
-          try {
-            controller.webImage.value = base64Decode(food.image!);
-          } catch (_) {
-            controller.webImage.value = null; // Falha na decodificação
-          }
-        } else {
-          controller.webImage.value = null;
-        }
-      }
-    } else {
-      // Se for novo cadastro, limpa tudo
-      nameController.clear();
-      descriptionController.clear();
-      priceController.clear();
-      controller.webImage.value = null;
-    }
-  }
+  const CadastroFormpage({super.key, required this.largura, this.id});
 
   @override
   Widget build(BuildContext context) {
-    // Espera os dados serem carregados antes de mostrar a tela
-    return FutureBuilder(
-      future: carregarDados(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // Mostra loading enquanto carrega
-          return const Center(child: CircularProgressIndicator());
-        }
+    final FoodController controller = Get.find();
 
-        // Stack permite sobrepor widgets (usado para o pop-up do editor)
-        return Stack(
-          children: [
-            // Conteúdo principal do formulário
-            Container(
-              width: largura, // Largura passada por parâmetro
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green, // Fundo verde
-                borderRadius: MediaQuery.of(context).size.width < 1100
-                    ? const BorderRadius.horizontal(right: Radius.circular(0))
-                    : const BorderRadius.horizontal(right: Radius.circular(12)),
-              ),
-              child: Column(
-                children: [
-                  // Campo de nome
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Nome'),
-                  ),
-                  // Campo de descrição
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Descrição'),
-                  ),
-                  // Campo de preço
-                  TextField(
-                    controller: priceController,
-                    decoration: const InputDecoration(labelText: 'Preço'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
+    // MUDANÇA: Chamamos loadFoodForEditing usando WidgetsBinding.instance.addPostFrameCallback
+    // Isso evita chamar Rx.value = ... durante o ciclo de build direto.
+    // O controller gerencia se deve ou não recarregar (ver loadFoodForEditing)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.loadFoodForEditing(id);
+    });
 
-                  // Botão para selecionar imagem
-                  ElevatedButton(
-                    onPressed: () async {
-                      final picked = await controller.pickImage();
-                      if (picked != null) {
-                        controller.webImage.value = picked;
-                        controller.mostrarEditor.value = true; // Abre o editor
-                      }
-                    },
-                    child: const Text('Selecionar imagem'),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Mostra imagem selecionada (se houver) e se o editor não estiver aberto
-                  Obx(() {
-                    if (controller.webImage.value != null &&
-                        !controller.mostrarEditor.value) {
-                      return Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          border: Border.all(),
-                          image: DecorationImage(
-                            image: MemoryImage(controller.webImage.value!),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
-
-                  const SizedBox(height: 20),
-
-                  // Botão de cadastrar/atualizar
-                  ElevatedButton(
-                    onPressed: () async {
-                      final food = Food(
-                        id: id,
-                        name: nameController.text,
-                        description: descriptionController.text,
-                        price: double.tryParse(priceController.text) ?? 0,
-                      );
-
-                      // Atualiza ou adiciona conforme o caso
-                      if (id != null && id != 0) {
-                        if (controller.webImage.value != null) {
-                          await controller.updateFoodWithImage(
-                            food,
-                            controller.webImage.value!,
-                          );
-                        } else {
-                          await controller.updateFood(food);
-                        }
-                      } else {
-                        if (controller.webImage.value != null) {
-                          await controller.addFoodWithImage(
-                            food,
-                            controller.webImage.value!,
-                          );
-                        } else {
-                          await controller.addFood(food);
-                        }
-                      }
-
-                      // Vai para a interface principal após salvar
-                      context.beamToNamed('/Interface');
-                    },
-                    child: Text(
-                      id != null && id != 0 ? 'Atualizar' : 'Cadastrar',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // POP-UP com o editor de imagem
-            Obx(() {
-              // Só mostra se o editor estiver ativado
-              if (controller.mostrarEditor.value &&
-                  controller.webImage.value != null) {
-                return Positioned.fill(
-                  child: Material(
-                    color: Colors.black.withOpacity(0.85),
-                    child: Stack(
-                      children: [
-                        // Container com editor centralizado verticalmente
-                        Align(
-                          alignment: Alignment.center,
-                          child: Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ImageEditorWidget(
-                              imageBytes: controller.webImage.value!,
-                              onImageCropped: (cropped, size) {
-                                controller.webImage.value = cropped;
-                                controller.mostrarEditor.value = false;
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink(); // Retorna vazio se não for pra mostrar
-            }),
-          ],
+    // MUDANÇA: Criamos os TextEditingControllers localmente, mas eles escutam
+    // as mudanças nas variáveis reativas do FoodController.
+    // Importante: use Obx aqui para que os TextFields se reconstruam se os valores do controller mudarem.
+    return Obx(() {
+      // MUDANÇA: Gerenciamento de carregamento do formulário
+      if (!controller.dadosCarregadosForm.value) {
+        // Usa dadosCarregadosForm
+        return Container(
+          width: largura,
+          decoration: BoxDecoration(
+            color: Colors.blueGrey[800],
+            borderRadius: MediaQuery.of(context).size.width < 1100
+                ? const BorderRadius.horizontal(right: Radius.circular(0))
+                : const BorderRadius.horizontal(right: Radius.circular(12)),
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
         );
-      },
-    );
+      }
+
+      // Controllers de texto (agora são locais ao build, mas seus valores são observados)
+      final nameTextController = TextEditingController(
+        text: controller.foodName.value,
+      );
+      final descriptionTextController = TextEditingController(
+        text: controller.foodDescription.value,
+      );
+      final priceMaskedController = MoneyMaskedTextController(
+        initialValue: controller.foodPrice.value,
+        leftSymbol: 'R\$ ',
+        decimalSeparator: ',',
+        thousandSeparator: '.',
+      );
+
+      // MUDANÇA: Listener para atualizar as variáveis reativas do controller
+      // É crucial adicionar esses listeners APÓS o TextController ser criado e inicializado com o valor inicial
+      // para evitar loops infinitos ou comportamento inesperado.
+      // O `WidgetsBinding.instance.addPostFrameCallback` assegura que isso aconteça depois do build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Remove listeners antigos para evitar duplicação em reconstruções
+        nameTextController.removeListener(
+          () {},
+        ); // Placeholder para remover todos
+        descriptionTextController.removeListener(() {});
+        priceMaskedController.removeListener(() {});
+
+        // Adiciona novos listeners
+        nameTextController.addListener(
+          () => controller.foodName.value = nameTextController.text,
+        );
+        descriptionTextController.addListener(
+          () =>
+              controller.foodDescription.value = descriptionTextController.text,
+        );
+        priceMaskedController.addListener(
+          () => controller.foodPrice.value = priceMaskedController.numberValue,
+        );
+
+        // Força a atualização do texto mascarado se o valor inicial for diferente
+        if (priceMaskedController.numberValue != controller.foodPrice.value) {
+          priceMaskedController.updateValue(controller.foodPrice.value);
+        }
+      });
+
+      return Stack(
+        children: [
+          Container(
+            width: largura,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey[800],
+              borderRadius: MediaQuery.of(context).size.width < 1100
+                  ? const BorderRadius.horizontal(right: Radius.circular(0))
+                  : const BorderRadius.horizontal(right: Radius.circular(12)),
+            ),
+            child: Column(
+              children: [
+                textFormTypeK(
+                  largura,
+                  'nome',
+                  Icons.receipt_long,
+                  Colors.white,
+                  controller: nameTextController, // Usa o controller local
+                ),
+                textFormTypeK(
+                  largura,
+                  'obs',
+                  Icons.info_outline,
+                  Colors.white,
+                  controller:
+                      descriptionTextController, // Usa o controller local
+                ),
+                textFormValueK(
+                  largura,
+                  'valor',
+                  Icons.sell,
+                  Colors.white,
+                  apenasValor: true,
+                  controller: priceMaskedController, // Usa o controller local
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    final picked = await controller.pickImage();
+                    if (picked != null) {
+                      controller.webImage.value = picked;
+                      controller.mostrarEditor.value = true;
+                    }
+                  },
+                  child: const Text('Selecionar imagem'),
+                ),
+                const SizedBox(height: 12),
+                Obx(() {
+                  if (controller.webImage.value != null &&
+                      !controller.mostrarEditor.value) {
+                    return Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(),
+                        image: DecorationImage(
+                          image: MemoryImage(controller.webImage.value!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    // MUDANÇA: Chamamos os métodos de salvar/atualizar sem passar 'Food'
+                    // Os valores já estão nas variáveis reativas do controller
+                    if (id != null && id != 0) {
+                      if (controller.webImage.value != null) {
+                        await controller.updateFoodWithImage(
+                          id!,
+                        ); // Passa apenas o ID
+                      } else {
+                        await controller.updateFood(id!); // Passa apenas o ID
+                      }
+                    } else {
+                      if (controller.webImage.value != null) {
+                        await controller.addFoodWithImage(); // Não passa nada
+                      } else {
+                        await controller.addFood(); // Não passa nada
+                      }
+                    }
+                    context.beamToNamed('/Interface');
+                  },
+                  child: Text(
+                    id != null && id != 0 ? 'Atualizar' : 'Cadastrar',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Obx(() {
+            if (controller.mostrarEditor.value &&
+                controller.webImage.value != null) {
+              return Positioned.fill(
+                child: Material(
+                  color: Colors.black38,
+                  child: Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.center,
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ImageEditorWidget(
+                            imageBytes: controller.webImage.value!,
+                            onImageCropped: (cropped, size) {
+                              controller.webImage.value = cropped;
+                              controller.mostrarEditor.value = false;
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+        ],
+      );
+    });
   }
 }

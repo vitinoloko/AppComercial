@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:appcatalogo/const/const.dart';
 import 'package:appcatalogo/model/food_model.dart';
+import 'package:appcatalogo/page/cadastro_produto/cart_controller.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +18,7 @@ class ListPage extends StatelessWidget {
     return Container(
       width: largura,
       decoration: BoxDecoration(
-        color: Colors.blue,
+        color: Colors.blueGrey[800],
         borderRadius: MediaQuery.of(context).size.width < 1100
             ? const BorderRadius.horizontal(right: Radius.circular(0))
             : const BorderRadius.horizontal(right: Radius.circular(12)),
@@ -57,68 +59,153 @@ class FoodCard extends StatelessWidget {
 
   const FoodCard({super.key, required this.food});
 
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<FoodController>();
+  void _showFoodDetails(BuildContext context) {
+    final cartController = Get.find<CartController>();
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: FoodImage(imageData: food.image),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.amber.shade900,
+          title: Text(food.name),
+          content: SizedBox(
+            width: 450,
+            height: 350,
+            child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    food.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Center(
+                    child: SizedBox(
+                      width: 160,
+                      height: 160,
+                      child: FoodImage(imageData: food.image),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 12),
+                  Text('Descrição: ${food.description}', style: corDialog),
+                  const SizedBox(height: 8),
                   Text(
-                    food.description,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'R\$ ${food.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          context.beamToNamed('/Cadastro/${food.id}');
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          controller.deleteFood(food.id!);
-                        },
-                      ),
-                    ],
+                    'Preço: R\$ ${food.price.toStringAsFixed(2)}',
+                    style: corDialog,
                   ),
                 ],
               ),
             ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Fechar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (food.id == null) {
+                  // Debug: Verifique se o ID da comida é nulo. Não deveria ser para adicionar.
+                  print(
+                    'ERRO: Food ID é nulo ao tentar adicionar ao carrinho!',
+                  );
+                  return;
+                }
+                print(
+                  'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho...',
+                );
+                await cartController.addItemToCart(food.id!, 1);
+                Navigator.of(ctx).pop();
+                // Verifique no console se esta snackbar aparece
+              },
+              child: const Text('Adicionar ao carrinho'),
+            ),
           ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final foodController = Get.find<FoodController>();
+
+    return GestureDetector(
+      onTap: () => _showFoodDetails(context),
+      child: Card(
+        // ... (resto do FoodCard igual)
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: FoodImage(imageData: food.image),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      food.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      food.description,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'R\$ ${food.price.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () {
+                            context.beamToNamed('/Cadastro/${food.id}');
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            foodController.deleteFood(food.id!);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.add_shopping_cart,
+                            color: Colors.purple,
+                          ),
+                          onPressed: () async {
+                            if (food.id == null) {
+                              // Debug: Verifique se o ID da comida é nulo.
+                              print(
+                                'ERRO: Food ID é nulo ao tentar adicionar ao carrinho diretamente!',
+                              );
+                              return;
+                            }
+                            print(
+                              'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho diretamente...',
+                            );
+                            final cartController = Get.find<CartController>();
+                            await cartController.addItemToCart(food.id!, 1);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

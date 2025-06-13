@@ -12,6 +12,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const serve_static_1 = require("@nestjs/serve-static");
 const path_1 = require("path");
 const food_module_1 = require("./food/food.module");
+const cart_module_1 = require("./cart/cart.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -33,6 +34,7 @@ exports.AppModule = AppModule = __decorate([
                 synchronize: true,
             }),
             food_module_1.FoodModule,
+            cart_module_1.CartModule
         ],
     })
 ], AppModule);

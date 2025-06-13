@@ -1,5 +1,7 @@
 import 'package:appcatalogo/homepage.dart';
 import 'package:appcatalogo/page/cadastro_produto/cadastro_formpage.dart';
+import 'package:appcatalogo/page/cadastro_produto/cart_controller.dart';
+import 'package:appcatalogo/page/cadastro_produto/cart_page.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
 import 'package:appcatalogo/page/cadastro_produto/list_page.dart';
 import 'package:beamer/beamer.dart';
@@ -10,6 +12,7 @@ import 'package:get/get.dart';
 
 void main() {
   Get.put(FoodController());
+  Get.put(CartController());
   runApp(MyApp());
 }
 
@@ -19,11 +22,12 @@ class MyApp extends StatelessWidget {
   final Map<String, Widget Function(double)> paginas = {
     '/Interface': (largura) => ListPage(largura: largura),
     '/Interface/Cadastro': (largura) => CadastroFormpage(largura: largura),
+    '/Interface/Cadastro/Cart': (largura) => CartPage(largura: largura),
   };
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp.router(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerDelegate: BeamerDelegate(
         initialPath: '/Interface',
@@ -83,9 +87,9 @@ class TelaResponsiva extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     children: [
                       ListTile(
-                        leading: Icon(Icons.home, color: Colors.white),
+                        leading: Icon(Icons.shopping_cart, color: Colors.white),
                         title: Text(
-                          'Início',
+                          'Catalogo',
                           style: TextStyle(color: Colors.white),
                         ),
                         onTap: () {
@@ -94,12 +98,9 @@ class TelaResponsiva extends StatelessWidget {
                         },
                       ),
                       ListTile(
-                        leading: Icon(
-                          Icons.stacked_line_chart,
-                          color: Colors.white,
-                        ),
+                        leading: Icon(Icons.add, color: Colors.white),
                         title: Text(
-                          'Teste',
+                          'Cadastro de Produto',
                           style: TextStyle(color: Colors.white),
                         ),
                         onTap: () {

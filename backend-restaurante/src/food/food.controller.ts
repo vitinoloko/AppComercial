@@ -21,7 +21,6 @@ export class FoodController {
    return this.foodService.create(data);
   }
 
-
   @Get()
   findAll() {
     return this.foodService.findAll();
