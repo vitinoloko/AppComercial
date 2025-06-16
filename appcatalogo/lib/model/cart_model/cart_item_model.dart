@@ -1,5 +1,5 @@
 // lib/models/cart_item.dart
-import 'package:appcatalogo/model/food_model.dart'; // Ajuste o caminho
+import 'package:appcatalogo/model/food/food_model.dart'; // Ajuste o caminho
 
 class CartItem {
   final int id;

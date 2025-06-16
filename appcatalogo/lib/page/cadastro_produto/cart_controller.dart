@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:appcatalogo/model/cart.dart';
+import 'package:appcatalogo/model/cart_model/cart_model.dart';
 import 'package:flutter/foundation.dart'; // Importe para usar kDebugMode
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;

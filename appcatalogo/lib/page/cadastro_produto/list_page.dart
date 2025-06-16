@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:appcatalogo/const/const.dart';
-import 'package:appcatalogo/model/food_model.dart';
+import 'package:appcatalogo/model/food/food_model.dart';
 import 'package:appcatalogo/page/cadastro_produto/cart_controller.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
 import 'package:beamer/beamer.dart';

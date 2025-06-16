@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:appcatalogo/model/extendedimageeditor.dart';
-import 'package:appcatalogo/model/food_model.dart';
+import 'package:appcatalogo/const/extendedimageeditor.dart';
+import 'package:appcatalogo/model/food/food_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart'; // Importe para TextEditingController

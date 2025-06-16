@@ -1,5 +1,5 @@
 import 'package:appcatalogo/const/const.dart';
-import 'package:appcatalogo/model/extendedimageeditor.dart';
+import 'package:appcatalogo/const/extendedimageeditor.dart';
 import 'package:appcatalogo/page/cadastro_produto/food_controller.dart';
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
