@@ -49,7 +49,8 @@ let CartService = class CartService {
                 throw new Error("Falha catastrófica: Carrinho recém-criado não foi encontrado.");
             }
         }
-        return cart;
+        await this.calculateCartTotal(cart);
+        return await this.cartRepository.save(cart);
     }
     async addItemToCart(addItemDto) {
         const { productId, quantity } = addItemDto;
@@ -61,6 +62,7 @@ let CartService = class CartService {
         let cartItem = cart.items?.find(item => item.productId === productId);
         if (cartItem) {
             cartItem.quantity += quantity;
+            cartItem.price = food.price;
             if (cartItem.quantity <= 0) {
                 await this.removeItemFromCart(cartItem.id);
             }
@@ -79,7 +81,7 @@ let CartService = class CartService {
         }
         const updatedCart = await this.cartRepository.findOne({
             where: { id: cart.id },
-            relations: ['items'],
+            relations: ['items', 'items.product'],
             order: { items: { id: 'ASC' } }
         });
         if (!updatedCart) {
@@ -89,7 +91,7 @@ let CartService = class CartService {
         return await this.cartRepository.save(updatedCart);
     }
     async updateItemQuantity(cartItemId, updateItemQuantityDto) {
-        const cartItem = await this.cartItemRepository.findOne({ where: { id: cartItemId }, relations: ['cart'] });
+        const cartItem = await this.cartItemRepository.findOne({ where: { id: cartItemId }, relations: ['cart', 'product'] });
         if (!cartItem) {
             throw new common_1.NotFoundException('Item do carrinho não encontrado.');
         }
@@ -98,10 +100,13 @@ let CartService = class CartService {
             return this.removeItemFromCart(cartItemId);
         }
         cartItem.quantity = quantity;
+        if (cartItem.product) {
+            cartItem.price = cartItem.product.price;
+        }
         await this.cartItemRepository.save(cartItem);
         const updatedCart = await this.cartRepository.findOne({
             where: { id: cartItem.cart.id },
-            relations: ['items'],
+            relations: ['items', 'items.product'],
             order: { items: { id: 'ASC' } }
         });
         if (!updatedCart) {
@@ -119,7 +124,7 @@ let CartService = class CartService {
         await this.cartItemRepository.remove(cartItem);
         const updatedCart = await this.cartRepository.findOne({
             where: { id: cartId },
-            relations: ['items'],
+            relations: ['items', 'items.product'],
             order: { items: { id: 'ASC' } }
         });
         if (!updatedCart) {
@@ -130,25 +135,30 @@ let CartService = class CartService {
     }
     async getCart() {
         const cart = await this.getOrCreateCart();
-        const foundCart = await this.cartRepository.findOne({
-            where: { id: cart.id },
-            relations: ['items', 'items.product'],
-            order: { items: { id: 'ASC' } }
-        });
-        if (!foundCart) {
-            return this.cartRepository.create({ id: cart.id, totalAmount: 0, items: [] });
-        }
-        return foundCart;
+        return cart;
     }
     async calculateCartTotal(cart) {
         const currentCartWithItems = await this.cartRepository.findOne({
             where: { id: cart.id },
-            relations: ['items'],
+            relations: ['items', 'items.product'],
             order: { items: { id: 'ASC' } }
         });
         if (currentCartWithItems) {
             cart.items = currentCartWithItems.items || [];
-            cart.totalAmount = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            let total = 0;
+            for (const item of cart.items) {
+                if (item.product) {
+                    if (item.price !== item.product.price) {
+                        item.price = item.product.price;
+                        await this.cartItemRepository.save(item);
+                    }
+                    total += item.price * item.quantity;
+                }
+                else {
+                    console.warn(`[calculateCartTotal] Produto não encontrado para CartItem ID: ${item.id}.`);
+                }
+            }
+            cart.totalAmount = total;
         }
         else {
             cart.items = [];

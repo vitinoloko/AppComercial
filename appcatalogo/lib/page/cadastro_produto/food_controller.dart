@@ -1,26 +1,29 @@
 import 'dart:convert';
 import 'package:appcatalogo/const/extendedimageeditor.dart';
-import 'package:appcatalogo/model/food/food_model.dart';
+import 'package:appcatalogo/model/food/food_model.dart'; // Make sure this path is correct for your Food model
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'; // Importe para TextEditingController
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_masked_text2/flutter_masked_text2.dart'; // Para MoneyMaskedTextController
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
 class FoodController extends GetxController {
   var foodList = <Food>[].obs;
-  var isLoading = false.obs; // Para a lista de comidas
+  var isLoading = false.obs;
 
-  // --- CONTROLADORES DE TEXTO MOVIDOS PARA O CONTROLLER ---
-  // Eles precisam ser acessíveis globalmente e manter o estado
+  // --- CONTROLADORES DE TEXTO ---
   late TextEditingController nameTextController;
   late TextEditingController descriptionTextController;
   late MoneyMaskedTextController priceMaskedController;
 
-  var foodName = ''
-      .obs; // Apenas para reatividade interna ou se precisar de Obx nos TextFields
+  // --- Adicione esta linha para definir 'foodBeingEdited' ---
+  final Rx<Food?> foodBeingEdited = Rx<Food?>(
+    null,
+  ); // Variável reativa para o Food sendo editado
+
+  var foodName = ''.obs;
   var foodDescription = ''.obs;
   var foodPrice = 0.0.obs;
   var currentEditingFoodId = Rx<int?>(null);
@@ -29,15 +32,13 @@ class FoodController extends GetxController {
   var cellImage = Rx<String?>(null);
   var mostrarEditor = false.obs;
 
-  var dadosCarregadosForm =
-      false.obs; // Para o estado de carregamento do FORMULÁRIO
+  var dadosCarregadosForm = false.obs;
 
   final String baseUrl = 'http://localhost:3000/foods';
 
   @override
   void onInit() {
     super.onInit();
-    // Inicializa os controladores de texto aqui, uma única vez
     nameTextController = TextEditingController();
     descriptionTextController = TextEditingController();
     priceMaskedController = MoneyMaskedTextController(
@@ -47,9 +48,6 @@ class FoodController extends GetxController {
       thousandSeparator: '.',
     );
 
-    // Opcional: Adiciona listeners aqui para atualizar as variáveis Rx
-    // Isso pode ser útil se você precisar que os dados do formulário
-    // estejam nas variáveis Rx em tempo real para outras lógicas.
     nameTextController.addListener(
       () => foodName.value = nameTextController.text,
     );
@@ -60,12 +58,11 @@ class FoodController extends GetxController {
       () => foodPrice.value = priceMaskedController.numberValue,
     );
 
-    fetchFoods(); // Carrega a lista de comidas ao iniciar o app
+    fetchFoods();
   }
 
   @override
   void onClose() {
-    // Descarte os controladores quando o controller for fechado
     nameTextController.dispose();
     descriptionTextController.dispose();
     priceMaskedController.dispose();
@@ -73,7 +70,6 @@ class FoodController extends GetxController {
   }
 
   Future<void> loadFoodForEditing(int? id) async {
-    // Se o ID for o mesmo e os dados já estiverem carregados, evita recarregar
     if (currentEditingFoodId.value == id && dadosCarregadosForm.isTrue) {
       if (kDebugMode) {
         print(
@@ -89,21 +85,24 @@ class FoodController extends GetxController {
     dadosCarregadosForm.value = false;
     currentEditingFoodId.value = id;
 
-    // Limpa os controladores de texto e imagem
     nameTextController.clear();
     descriptionTextController.clear();
     priceMaskedController.updateValue(0.0);
     webImage.value = null;
+    foodBeingEdited.value =
+        null; // Limpa o foodBeingEdited ao iniciar uma nova carga
 
     if (id != null && id != 0) {
       final food = await getFoodById(id);
       if (food != null) {
         if (kDebugMode) print('DEBUG: Food ID $id encontrado: ${food.name}');
+
+        // --- Atribua o Food carregado à variável 'foodBeingEdited' ---
+        foodBeingEdited.value = food;
+
         nameTextController.text = food.name;
         descriptionTextController.text = food.description;
-        priceMaskedController.updateValue(
-          food.price,
-        ); // Usa updateValue para MoneyMaskedTextController
+        priceMaskedController.updateValue(food.price);
 
         if (food.image != null && food.image!.isNotEmpty) {
           try {
@@ -127,6 +126,9 @@ class FoodController extends GetxController {
     }
     dadosCarregadosForm.value = true;
   }
+
+  // ... (restante do seu código: pickAndEditImageComEditorCustom, pickAndCropImage, pickImage, fetchFoods, addFood, addFoodWithImage, updateFood, updateFoodWithImage, deleteFood, getFoodById)
+  // Certifique-se de que o restante do seu código está abaixo desta linha
 
   Future<Uint8List?> pickAndEditImageComEditorCustom(
     BuildContext context,
@@ -205,7 +207,7 @@ class FoodController extends GetxController {
     try {
       isLoading.value = true;
       final food = Food(
-        name: nameTextController.text, // Usa o valor do controller direto
+        name: nameTextController.text,
         description: descriptionTextController.text,
         price: priceMaskedController.numberValue,
       );
@@ -222,7 +224,6 @@ class FoodController extends GetxController {
             'DEBUG: addFood - Sucesso: Comida adicionada (ID: ${newFood.id})',
           );
         }
-        // Limpa os campos após adicionar
         nameTextController.clear();
         descriptionTextController.clear();
         priceMaskedController.updateValue(0.0);

@@ -15,7 +15,7 @@ class CartPage extends StatelessWidget {
       width: largura,
       decoration: BoxDecoration(
         color: Colors.blueGrey[800],
-        borderRadius: MediaQuery.of(context).size.width < 1100
+        borderRadius: MediaQuery.of(context).size.width < 1200
             ? const BorderRadius.horizontal(right: Radius.circular(0))
             : const BorderRadius.horizontal(right: Radius.circular(12)),
       ),
@@ -25,19 +25,32 @@ class CartPage extends StatelessWidget {
             width: largura,
             decoration: BoxDecoration(
               color: Colors.blueGrey[800],
-              borderRadius: MediaQuery.of(context).size.width < 1100
+              borderRadius: MediaQuery.of(context).size.width < 1200
                   ? const BorderRadius.horizontal(right: Radius.circular(0))
                   : const BorderRadius.horizontal(right: Radius.circular(12)),
             ),
             padding: EdgeInsets.symmetric(vertical: 10),
-            child: const Text(
-              'Meu Carrinho',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+            child: Row(
+              children: [
+                Expanded(
+                  child: const Text(
+                    'Meu Carrinho',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                if (!GetPlatform.isMobile)
+                  IconButton(
+                    onPressed: () {
+                      cartController.fetchCart();
+                    },
+                    icon: Icon(Icons.refresh, color: Colors.white, size: 35),
+                  ),
+              ],
             ),
           ),
           Obx(() {
@@ -63,146 +76,155 @@ class CartPage extends StatelessWidget {
             }
 
             return Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(8.0),
-                itemCount: cart.items.length,
-                itemBuilder: (context, index) {
-                  final item = cart.items[index];
-                  final foodName = item.product?.name ?? 'Produto Desconhecido';
-                  final itemTotalPrice = item.price * item.quantity;
+              child: RefreshIndicator(
+                onRefresh: () => cartController.fetchCart(),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  itemCount: cart.items.length,
+                  itemBuilder: (context, index) {
+                    final item = cart.items[index];
+                    final foodName =
+                        item.product?.name ?? 'Produto Desconhecido';
+                    final itemTotalPrice = item.price * item.quantity;
 
-                  return Card(
-                    key: ValueKey(item.id),
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 4.0,
-                    ),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    color: Colors.blueGrey[700],
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        // <-- Esta é a Row que provavelmente está transbordando
-                        children: [
-                          // Imagem do produto - manter tamanho fixo
-                          SizedBox(
-                            width: 60,
-                            height: 60,
-                            child:
-                                item.product?.image != null &&
-                                    item.product!.image!.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: Image.memory(
-                                      base64Decode(item.product!.image!),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[600],
+                    return Card(
+                      key: ValueKey(item.id),
+                      margin: const EdgeInsets.symmetric(
+                        vertical: 8.0,
+                        horizontal: 4.0,
+                      ),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      color: Colors.blueGrey[700],
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          // <-- Esta é a Row que provavelmente está transbordando
+                          children: [
+                            // Imagem do produto - manter tamanho fixo
+                            SizedBox(
+                              width: 100,
+                              height: 100,
+                              child:
+                                  item.product?.image != null &&
+                                      item.product!.image!.isNotEmpty
+                                  ? ClipRRect(
                                       borderRadius: BorderRadius.circular(4),
+                                      child: Image.memory(
+                                        base64Decode(item.product!.image!),
+                                        fit: BoxFit.cover,
+                                        gaplessPlayback: true,
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[600],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Icon(
+                                        Icons.fastfood,
+                                        size: 40,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                    child: const Icon(
-                                      Icons.fastfood,
-                                      size: 40,
+                            ),
+                            const SizedBox(width: 10),
+                            // Detalhes do Produto - Envolvemos com Expanded
+                            Expanded(
+                              // <-- AQUI! Garante que esta coluna ocupe o espaço restante
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    foodName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
+                                    overflow: TextOverflow
+                                        .ellipsis, // Adicionado para lidar com nomes longos
                                   ),
-                          ),
-                          const SizedBox(width: 10),
-                          // Detalhes do Produto - Envolvemos com Expanded
-                          Expanded(
-                            // <-- AQUI! Garante que esta coluna ocupe o espaço restante
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                                  Text(
+                                    'R\$ ${item.price.toStringAsFixed(2)} / un.',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Subtotal: R\$ ${itemTotalPrice.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.lightGreenAccent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Botões de Quantidade e Excluir - Envolvemos com Row (já está) e garantimos que os ícones caibam
+                            Row(
+                              mainAxisSize: MainAxisSize
+                                  .min, // Garante que a Row ocupe apenas o espaço necessário
                               children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.remove_circle_outline,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ), // Tamanho reduzido
+                                  onPressed: () {
+                                    if (item.quantity > 1) {
+                                      cartController.updateItemQuantity(
+                                        item.id,
+                                        item.quantity - 1,
+                                      );
+                                    } else {
+                                      cartController.removeItemFromCart(
+                                        item.id,
+                                      );
+                                    }
+                                  },
+                                ),
                                 Text(
-                                  foodName,
+                                  '${item.quantity}',
                                   style: const TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
-                                  overflow: TextOverflow
-                                      .ellipsis, // Adicionado para lidar com nomes longos
                                 ),
-                                Text(
-                                  'R\$ ${item.price.toStringAsFixed(2)} / un.',
-                                  style: const TextStyle(color: Colors.white70),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.add_circle_outline,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ), // Tamanho reduzido
+                                  onPressed: () {
+                                    cartController.updateItemQuantity(
+                                      item.id,
+                                      item.quantity + 1,
+                                    );
+                                  },
                                 ),
-                                Text(
-                                  'Subtotal: R\$ ${itemTotalPrice.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.lightGreenAccent,
-                                  ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.redAccent,
+                                    size: 20,
+                                  ), // Tamanho reduzido
+                                  onPressed: () {
+                                    cartController.removeItemFromCart(item.id);
+                                  },
                                 ),
                               ],
                             ),
-                          ),
-                          // Botões de Quantidade e Excluir - Envolvemos com Row (já está) e garantimos que os ícones caibam
-                          Row(
-                            mainAxisSize: MainAxisSize
-                                .min, // Garante que a Row ocupe apenas o espaço necessário
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.remove_circle_outline,
-                                  color: Colors.white,
-                                  size: 20,
-                                ), // Tamanho reduzido
-                                onPressed: () {
-                                  if (item.quantity > 1) {
-                                    cartController.updateItemQuantity(
-                                      item.id,
-                                      item.quantity - 1,
-                                    );
-                                  } else {
-                                    cartController.removeItemFromCart(item.id);
-                                  }
-                                },
-                              ),
-                              Text(
-                                '${item.quantity}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.add_circle_outline,
-                                  color: Colors.white,
-                                  size: 20,
-                                ), // Tamanho reduzido
-                                onPressed: () {
-                                  cartController.updateItemQuantity(
-                                    item.id,
-                                    item.quantity + 1,
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.redAccent,
-                                  size: 20,
-                                ), // Tamanho reduzido
-                                onPressed: () {
-                                  cartController.removeItemFromCart(item.id);
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             );
           }),

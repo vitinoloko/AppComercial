@@ -14,41 +14,61 @@ class ListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<FoodController>();
+    final FoodController controller = Get.find<FoodController>();
+
+    // Garante que fetchFoods seja chamado se a lista estiver vazia e não estiver carregando
+    // ou se o Beamer acabou de reconstruir e precisa garantir os dados.
+    // Esta linha pode ser crítica para garantir que os dados estejam sendo buscados.
+    if (controller.foodList.isEmpty && !controller.isLoading.value) {
+      controller.fetchFoods();
+    }
 
     return Container(
       width: largura,
       decoration: BoxDecoration(
         color: Colors.blueGrey[800],
-        borderRadius: MediaQuery.of(context).size.width < 1100
+        borderRadius: MediaQuery.of(context).size.width < 1200
             ? const BorderRadius.horizontal(right: Radius.circular(0))
             : const BorderRadius.horizontal(right: Radius.circular(12)),
       ),
       child: Obx(() {
+        // --- NOVO: Tratamento do estado de carregamento ---
+        if (controller.isLoading.value && controller.foodList.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Colors.white,
+            ), // Mostra carregamento
+          );
+        }
+
         if (controller.foodList.isEmpty) {
           return const Center(
             child: Text(
-              'Nenhuma comida cadastrada',
+              'Nenhum produto encontrado. Adicione um novo!', // Mensagem para lista vazia após carregar
               style: TextStyle(color: Colors.white, fontSize: 18),
+              textAlign: TextAlign.center,
             ),
           );
         }
 
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.foodList.length,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 500,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 2,
-            mainAxisExtent: 170,
+        return RefreshIndicator(
+          onRefresh: () => controller.fetchFoods(),
+          child: GridView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: controller.foodList.length,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 600,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 2,
+              mainAxisExtent: 170,
+            ),
+            itemBuilder: (context, index) {
+              final food =
+                  controller.foodList[controller.foodList.length - 1 - index];
+              return FoodCard(food: food);
+            },
           ),
-          itemBuilder: (context, index) {
-            final food =
-                controller.foodList[controller.foodList.length - 1 - index];
-            return FoodCard(food: food);
-          },
         );
       }),
     );
@@ -61,14 +81,25 @@ class FoodCard extends StatelessWidget {
   const FoodCard({super.key, required this.food});
 
   void _showFoodDetails(BuildContext context) {
-    final cartController = Get.find<CartController>();
+    // Define o limite máximo de caracteres para o nome.
+    const int nameCharLimit = 25; // Você pode ajustar este valor
 
     showDialog(
       context: context,
       builder: (ctx) {
+        String displayedName = food.name;
+        // Verifica se o nome é maior que o limite e o trunca se necessário
+        if (displayedName.length > nameCharLimit) {
+          displayedName = '${displayedName.substring(0, nameCharLimit)}...';
+        }
+
         return AlertDialog(
-          backgroundColor: Colors.amber.shade900,
-          title: Text(food.name),
+          backgroundColor: Colors.blueGrey[800],
+          title: Text(
+            displayedName,
+            style: corPedido,
+            textAlign: TextAlign.center,
+          ), // <--- APLICAÇÃO DO NOME LIMITADO AQUI
           content: SizedBox(
             width: 450,
             height: 350,
@@ -80,46 +111,64 @@ class FoodCard extends StatelessWidget {
                     child: SizedBox(
                       width: 160,
                       height: 160,
-                      child: FoodImage(imageData: food.image),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: FoodImage(imageData: food.image),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Descrição: ${food.description}', style: corDialog),
+                  Center(child: Text(food.description, style: corDialog)),
                   const SizedBox(height: 8),
-                  Text(
-                    'Preço: R\$ ${food.price.toStringAsFixed(2)}',
-                    style: corDialog,
-                  ),
                 ],
               ),
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Fechar'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (food.id == null) {
-                  // Debug: Verifique se o ID da comida é nulo. Não deveria ser para adicionar.
-                  if (kDebugMode) {
-                    print(
-                      'ERRO: Food ID é nulo ao tentar adicionar ao carrinho!',
-                    );
-                  }
-                  return;
-                }
-                if (kDebugMode) {
-                  print(
-                    'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho...',
-                  );
-                }
-                await cartController.addItemToCart(food.id!, 1);
-                Navigator.of(ctx).pop();
-                // Verifique no console se esta snackbar aparece
-              },
-              child: const Text('Adicionar ao carrinho'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'R\$ ${food.price.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: Colors.lightGreenAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+
+                botaoForm(
+                  'Carrinho',
+                  iconM: Icons.add_shopping_cart,
+                  iconMcor: Colors.lightGreenAccent,
+                  () async {
+                    if (food.id == null) {
+                      // Debug: Verifique se o ID da comida é nulo.
+                      if (kDebugMode) {
+                        print(
+                          'ERRO: Food ID é nulo ao tentar adicionar ao carrinho diretamente!',
+                        );
+                      }
+                      return;
+                    }
+                    if (kDebugMode) {
+                      print(
+                        'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho diretamente...',
+                      );
+                    }
+                    final cartController = Get.find<CartController>();
+                    await cartController.addItemToCart(food.id!, 1);
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+
+                botaoForm(
+                  'Fechar',
+                  iconM: Icons.close,
+                  iconMcor: Colors.redAccent,
+                  () => Navigator.of(ctx).pop(),
+                ),
+              ],
             ),
           ],
         );
@@ -147,20 +196,28 @@ class FoodCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      food.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            food.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       food.description,
                       overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
+                      maxLines: 1,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -173,42 +230,42 @@ class FoodCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () {
-                            context.beamToNamed('/Cadastro/${food.id}');
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () async {
-                            await foodController.deleteFood(food.id!);
-                            await cartController.fetchCart();
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.add_shopping_cart,
-                            color: Colors.purple,
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.teal,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          onPressed: () async {
-                            if (food.id == null) {
-                              // Debug: Verifique se o ID da comida é nulo.
-                              if (kDebugMode) {
-                                print(
-                                  'ERRO: Food ID é nulo ao tentar adicionar ao carrinho diretamente!',
-                                );
-                              }
-                              return;
-                            }
-                            if (kDebugMode) {
-                              print(
-                                'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho diretamente...',
-                              );
-                            }
-                            final cartController = Get.find<CartController>();
-                            await cartController.addItemToCart(food.id!, 1);
-                          },
+
+                          child: Row(
+                            children: [
+                              tooltipForm(
+                                'Editar',
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.blue,
+                                  ),
+                                  onPressed: () {
+                                    context.beamToNamed('/Cadastro/${food.id}');
+                                  },
+                                ),
+                              ),
+                              tooltipForm(
+                                'Deletar',
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () async {
+                                    await foodController.deleteFood(food.id!);
+                                    await cartController.fetchCart();
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

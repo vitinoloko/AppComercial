@@ -9,6 +9,60 @@ final TextStyle cadastroProdutoConst = TextStyle(
   color: Colors.white,
   fontSize: 20,
 );
+final TextStyle corPedido = TextStyle(color: Colors.white, fontSize: 25);
+
+Widget tooltipForm(String nomeFuncao, Widget child) {
+  return Tooltip(
+    message: nomeFuncao,
+    decoration: BoxDecoration(
+      color: const Color.fromARGB(214, 0, 0, 0), // Fundo escuro
+      borderRadius: BorderRadius.circular(8), // Cantos arredondados
+    ),
+    textStyle: const TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    waitDuration: const Duration(milliseconds: 300), // Tempo até aparecer
+    showDuration: const Duration(seconds: 2), // Quanto tempo fica visível
+    child: child,
+  );
+}
+
+Widget botaoForm(
+  String nomeBot,
+  Function aoPressionar, {
+  IconData? iconM,
+  Color? iconMcor,
+}) {
+  return TextButton(
+    style: TextButton.styleFrom(
+      backgroundColor: Colors.grey.shade900,
+      foregroundColor: Colors.white,
+      splashFactory: NoSplash.splashFactory,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      // Adicione um padding horizontal se quiser um espaçamento interno consistente
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    ),
+    // Remova o SizedBox que definia a largura fixa
+    child: Row(
+      // O Row vai se ajustar ao tamanho do conteúdo (Ícone + Texto)
+      mainAxisSize: MainAxisSize
+          .min, // Faz o Row ocupar o mínimo de espaço horizontal necessário
+      mainAxisAlignment: MainAxisAlignment
+          .center, // Centraliza o conteúdo se houver espaço extra
+      children: [
+        if (iconM != null) ...[
+          Icon(iconM, color: iconMcor),
+          const SizedBox(width: 8),
+        ],
+        Text(nomeBot),
+      ],
+    ),
+    onPressed: () => aoPressionar(),
+  );
+}
 
 Widget botaointeracao(
   final String tipoTexto,
@@ -145,7 +199,7 @@ Widget textFormTypeK(
   double? tamanho,
   TextAlign? linha,
   TextInputType? numeros,
-  String? num,
+  String? info,
   bool apenasnumero = false,
   TextEditingController? controller,
 }) {
@@ -177,7 +231,7 @@ Widget textFormTypeK(
               ],
             ),
           ),
-          hintText: num,
+          hintText: info,
           hintStyle: TextStyle(
             color: const Color.fromARGB(151, 255, 255, 255),
             fontSize: 10,

@@ -17,7 +17,7 @@ class HomePage extends StatelessWidget {
       width: largura,
       decoration: BoxDecoration(
         color: Color.fromARGB(255, 72, 91, 100),
-        borderRadius: MediaQuery.of(context).size.width < 1100
+        borderRadius: MediaQuery.of(context).size.width < 1200
             ? BorderRadius.horizontal(left: Radius.circular(0))
             : BorderRadius.horizontal(left: Radius.circular(12)),
       ),
@@ -41,7 +41,8 @@ class HomePage extends StatelessWidget {
             return ExpansionTile(
               collapsedTextColor: Colors.white,
               textColor: Colors.white,
-              iconColor: Color(0xFF4ACFD9),
+              iconColor: Colors.amber,
+              // iconColor: Color(0xFF4ACFD9),
               collapsedIconColor: Colors.white,
               title: Center(
                 child: Row(
@@ -68,7 +69,7 @@ class HomePage extends StatelessWidget {
               children: [
                 botaointeracao('Catalogo', cadastroProdutoConst, () {
                   context.beamToNamed('/Interface');
-                }, Icons.shopping_bag_sharp),
+                }, Icons.fastfood_rounded),
                 botaointeracao('Cadastro de Produto', cadastroProdutoConst, () {
                   context.beamToNamed('/Interface/Cadastro');
                 }, Icons.add),

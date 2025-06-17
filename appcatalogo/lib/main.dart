@@ -8,8 +8,6 @@ import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-// Imports mantidos iguais
-
 void main() {
   Get.put(FoodController());
   Get.put(CartController());
@@ -19,10 +17,35 @@ void main() {
 class MyApp extends StatelessWidget {
   MyApp({super.key});
 
-  final Map<String, Widget Function(double)> paginas = {
+  // Mapa para o menu, que agora é separado da lógica de rotas do Beamer, mas ainda necessário para HomePage
+  final Map<String, Widget Function(double)> menuPaginasMap = {
     '/Interface': (largura) => ListPage(largura: largura),
     '/Interface/Cadastro': (largura) => CadastroFormpage(largura: largura),
+    // Adicione outras páginas para o menu aqui, se houver
   };
+
+  // Método auxiliar para criar uma BeamPage de forma automática e robusta
+  BeamPage _createBeamPage({
+    required String path,
+    required String title,
+    required Widget Function(double) pageBuilder,
+    int? id, // Opcional para rotas com ID
+  }) {
+    return BeamPage(
+      key: ValueKey(path + (id != null ? '-$id' : '')), // Chave única
+      title: title, // Título obrigatório para o Beamer
+      child: Builder(
+        // Builder para robustez do contexto
+        builder: (innerContext) {
+          return TelaResponsiva(
+            paginas: pageBuilder(900), // Constrói a página com largura 900
+            menuPaginas: menuPaginasMap, // Passa o mapa de menu
+          );
+        },
+      ),
+      type: BeamPageType.fadeTransition,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,34 +55,31 @@ class MyApp extends StatelessWidget {
         initialPath: '/Interface',
         locationBuilder: RoutesLocationBuilder(
           routes: {
-            for (var entry in paginas.entries)
-              entry.key: (context, state, data) {
-                return BeamPage(
-                  child: TelaResponsiva(
-                    paginas: entry.value(800), // widget da rota atual
-                    menuPaginas: paginas, // passando o mapa para o menu
-                  ),
-                  type: BeamPageType.fadeTransition,
-                );
-              },
+            // Rotas usando o método auxiliar _createBeamPage
+            '/Interface': (context, state, data) => _createBeamPage(
+              path: '/Interface',
+              title: 'Catálogo de Produtos',
+              pageBuilder: (largura) => ListPage(largura: largura),
+            ),
+            '/Interface/Cadastro': (context, state, data) => _createBeamPage(
+              path: '/Interface/Cadastro',
+              title: 'Cadastro de Produto',
+              pageBuilder: (largura) => CadastroFormpage(largura: largura),
+            ),
             '/Cadastro/:id': (context, state, data) {
               final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-              return BeamPage(
-                key: ValueKey('Cadastro-$id'),
-                child: TelaResponsiva(
-                  paginas: CadastroFormpage(largura: 800, id: id),
-                  menuPaginas: paginas, // mesmo mapa para o menu
-                ),
+              return _createBeamPage(
+                path: '/Cadastro/:id',
+                title: 'Editar Produto',
+                pageBuilder: (largura) =>
+                    CadastroFormpage(largura: largura, id: id),
+                id: id, // Passa o ID para a chave
               );
             },
-            //   Se você definiu uma rota '/cart' separada, adicione-a aqui
-            // Exemplo:
-            '/Cart': (context, state, data) => BeamPage(
-              key: ValueKey('cart_page_route'),
-              child: TelaResponsiva(
-                paginas: CartPage(largura: 800),
-                menuPaginas: paginas,
-              ),
+            '/Cart': (context, state, data) => _createBeamPage(
+              path: '/Cart',
+              title: 'Carrinho de Compras',
+              pageBuilder: (largura) => CartPage(largura: largura),
             ),
           },
         ).call,
@@ -86,7 +106,26 @@ class TelaResponsiva extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: MediaQuery.of(context).size.width < 600
-            ? AppBar(backgroundColor: Colors.blueGrey.shade900)
+            ? AppBar(
+                backgroundColor: Colors.blueGrey.shade900,
+                actions: [
+                  Obx(
+                    () => IconButton(
+                      icon: Badge.count(
+                        count: cartController.cartItemCount,
+                        isLabelVisible: cartController.cartItemCount > 0,
+                        child: const Icon(
+                          Icons.shopping_cart,
+                          color: Colors.white,
+                        ),
+                      ),
+                      onPressed: () {
+                        context.beamToNamed('/Cart');
+                      },
+                    ),
+                  ),
+                ],
+              )
             : null,
         drawer: MediaQuery.of(context).size.width < 600
             ? Drawer(
@@ -97,7 +136,7 @@ class TelaResponsiva extends StatelessWidget {
                     children: [
                       ListTile(
                         leading: const Icon(
-                          Icons.shopping_bag_sharp,
+                          Icons.fastfood_rounded,
                           color: Colors.white,
                         ), // Este ícone é genérico, não é do carrinho
                         title: const Text(
@@ -120,30 +159,6 @@ class TelaResponsiva extends StatelessWidget {
                           Navigator.pop(context);
                         },
                       ),
-                      Obx(
-                        // Obx para reagir a cartController.cartItemCount
-                        () => ListTile(
-                          leading: Badge.count(
-                            count: cartController
-                                .cartItemCount, // <--- REMOVIDO .bitLength!
-                            isLabelVisible:
-                                cartController.cartItemCount >
-                                0, // Opcional: Só mostra se > 0
-                            child: const Icon(
-                              Icons.shopping_cart,
-                              color: Colors.white,
-                            ),
-                          ),
-                          title: const Text(
-                            'Carrinho',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          onTap: () {
-                            context.beamToNamed('/Cart');
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -154,9 +169,9 @@ class TelaResponsiva extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               double width = constraints.maxWidth;
-              if (width > 1100) {
+              if (width > 1200) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 35),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
