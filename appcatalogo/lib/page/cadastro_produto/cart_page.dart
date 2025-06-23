@@ -133,32 +133,37 @@ class CartPage extends StatelessWidget {
                             const SizedBox(width: 10),
                             // Detalhes do Produto - Envolvemos com Expanded
                             Expanded(
-                              // <-- AQUI! Garante que esta coluna ocupe o espaço restante
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     foodName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
-                                    overflow: TextOverflow
-                                        .ellipsis, // Adicionado para lidar com nomes longos
                                   ),
                                   Text(
                                     'R\$ ${item.price.toStringAsFixed(2)} / un.',
                                     style: const TextStyle(
                                       color: Colors.white70,
+                                      fontSize: 12,
                                     ),
+                                    maxLines: 2,
+                                    softWrap: true,
                                   ),
                                   Text(
-                                    'Subtotal: R\$ ${itemTotalPrice.toStringAsFixed(2)}',
-                                    style: const TextStyle(
+                                    'Total: R\$ ${itemTotalPrice.toStringAsFixed(2)}',
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 13,
                                       color: Colors.lightGreenAccent,
                                     ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -207,16 +212,6 @@ class CartPage extends StatelessWidget {
                                     );
                                   },
                                 ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.redAccent,
-                                    size: 20,
-                                  ), // Tamanho reduzido
-                                  onPressed: () {
-                                    cartController.removeItemFromCart(item.id);
-                                  },
-                                ),
                               ],
                             ),
                           ],
@@ -242,21 +237,27 @@ class CartPage extends StatelessWidget {
               ],
             ),
             child: Obx(
-              () => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              () => Column(
+                // MUDANÇA: Row -> Column
+                mainAxisSize:
+                    MainAxisSize.min, // Para a coluna ocupar o mínimo de altura
+                crossAxisAlignment: CrossAxisAlignment
+                    .stretch, // Para os textos ocuparem toda a largura
                 children: [
                   const Text(
                     'Total do Carrinho:',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18, // Fonte um pouco menor para harmonizar
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
+                  const SizedBox(height: 4), // Pequeno espaço entre eles
                   Text(
                     'R\$ ${cartController.currentCart.value?.totalAmount.toStringAsFixed(2) ?? '0.00'}',
+                    textAlign: TextAlign.right, // Alinha o preço à direita
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 22, // Damos mais destaque ao preço
                       fontWeight: FontWeight.bold,
                       color: Colors.lightGreenAccent,
                     ),

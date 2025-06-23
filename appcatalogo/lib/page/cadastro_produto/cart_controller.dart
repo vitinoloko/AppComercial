@@ -96,7 +96,7 @@ class CartController extends GetxController {
       );
     }
     try {
-      isLoadingCart.value = true;
+      // isLoadingCart.value = true;
       final response = await http.patch(
         Uri.parse('$baseUrl/item/$cartItemId'),
         headers: {'Content-Type': 'application/json'},
@@ -134,7 +134,7 @@ class CartController extends GetxController {
     // Print 1: Indica a ação
     if (kDebugMode) print('DEBUG: Removendo Item ID: $cartItemId do carrinho.');
     try {
-      isLoadingCart.value = true;
+      // isLoadingCart.value = true;
       final response = await http.delete(
         Uri.parse('$baseUrl/item/$cartItemId'),
       );

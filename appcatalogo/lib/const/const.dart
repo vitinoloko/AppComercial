@@ -36,31 +36,34 @@ Widget botaoForm(
   IconData? iconM,
   Color? iconMcor,
 }) {
-  return TextButton(
-    style: TextButton.styleFrom(
-      backgroundColor: Colors.grey.shade900,
-      foregroundColor: Colors.white,
-      splashFactory: NoSplash.splashFactory,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      // Adicione um padding horizontal se quiser um espaçamento interno consistente
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    ),
-    // Remova o SizedBox que definia a largura fixa
-    child: Row(
-      // O Row vai se ajustar ao tamanho do conteúdo (Ícone + Texto)
-      mainAxisSize: MainAxisSize
-          .min, // Faz o Row ocupar o mínimo de espaço horizontal necessário
-      mainAxisAlignment: MainAxisAlignment
-          .center, // Centraliza o conteúdo se houver espaço extra
-      children: [
-        if (iconM != null) ...[
-          Icon(iconM, color: iconMcor),
-          const SizedBox(width: 8),
+  return SizedBox(
+    height: 45,
+    child: TextButton(
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.grey.shade900,
+        foregroundColor: Colors.white,
+        splashFactory: NoSplash.splashFactory,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        // Adicione um padding horizontal se quiser um espaçamento interno consistente
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      ),
+      // Remova o SizedBox que definia a largura fixa
+      child: Row(
+        // O Row vai se ajustar ao tamanho do conteúdo (Ícone + Texto)
+        mainAxisSize: MainAxisSize
+            .min, // Faz o Row ocupar o mínimo de espaço horizontal necessário
+        mainAxisAlignment: MainAxisAlignment
+            .center, // Centraliza o conteúdo se houver espaço extra
+        children: [
+          if (iconM != null) ...[
+            Icon(iconM, color: iconMcor),
+            const SizedBox(width: 8),
+          ],
+          Text(nomeBot),
         ],
-        Text(nomeBot),
-      ],
+      ),
+      onPressed: () => aoPressionar(),
     ),
-    onPressed: () => aoPressionar(),
   );
 }
 

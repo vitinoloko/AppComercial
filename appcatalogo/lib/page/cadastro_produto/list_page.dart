@@ -104,6 +104,7 @@ class FoodCard extends StatelessWidget {
             width: 450,
             height: 350,
             child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -118,57 +119,73 @@ class FoodCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Center(child: Text(food.description, style: corDialog)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(155, 0, 0, 0),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.all(20),
+                    child: Center(
+                      child: Text(food.description, style: corDialog),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                 ],
               ),
             ),
           ),
           actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'R\$ ${food.price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.lightGreenAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+            SizedBox(
+              width: double.infinity, // Ocupa toda a largura do Dialog
+              height:
+                  90, // Altura suficiente para os botões quebrarem a linha se necessário
+              child: Stack(
+                alignment: Alignment
+                    .centerLeft, // Alinha os filhos ao centro por padrão
+                children: [
+                  // Widget 1: O Preço (ficará no centro do Stack)
+                  Text(
+                    'R\$ ${food.price.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.lightGreenAccent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
                   ),
-                ),
 
-                botaoForm(
-                  'Carrinho',
-                  iconM: Icons.add_shopping_cart,
-                  iconMcor: Colors.lightGreenAccent,
-                  () async {
-                    if (food.id == null) {
-                      // Debug: Verifique se o ID da comida é nulo.
-                      if (kDebugMode) {
-                        print(
-                          'ERRO: Food ID é nulo ao tentar adicionar ao carrinho diretamente!',
-                        );
-                      }
-                      return;
-                    }
-                    if (kDebugMode) {
-                      print(
-                        'Tentando adicionar ${food.name} (ID: ${food.id}) ao carrinho diretamente...',
-                      );
-                    }
-                    final cartController = Get.find<CartController>();
-                    await cartController.addItemToCart(food.id!, 1);
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-
-                botaoForm(
-                  'Fechar',
-                  iconM: Icons.close,
-                  iconMcor: Colors.redAccent,
-                  () => Navigator.of(ctx).pop(),
-                ),
-              ],
+                  // Widget 2: Os Botões (alinhados à direita)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 8.0, // Espaçamento horizontal entre os botões
+                      runSpacing:
+                          8.0, // Espaçamento vertical se os botões quebrarem a linha
+                      children: [
+                        botaoForm(
+                          'Carrinho',
+                          iconM: Icons.add_shopping_cart,
+                          iconMcor: Colors.lightGreenAccent,
+                          () async {
+                            if (food.id == null) {
+                              if (kDebugMode) print('ERRO: Food ID é nulo!');
+                              return;
+                            }
+                            final cartController = Get.find<CartController>();
+                            await cartController.addItemToCart(food.id!, 1);
+                            Navigator.of(ctx).pop();
+                          },
+                        ),
+                        botaoForm(
+                          'Fechar',
+                          iconM: Icons.close,
+                          iconMcor: Colors.redAccent,
+                          () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         );
@@ -233,7 +250,7 @@ class FoodCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.teal,
+                            color: Colors.black38,
                             borderRadius: BorderRadius.circular(8),
                           ),
 
