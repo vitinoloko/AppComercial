@@ -11,7 +11,7 @@ async function bootstrap() {
     app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
     app.enableCors();
     app.use('/uploads', express.static((0, path_1.join)(__dirname, '..', '..', 'uploads')));
-    await app.listen(3000);
+    await app.listen(2999);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
