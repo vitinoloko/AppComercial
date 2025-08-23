@@ -31,6 +31,7 @@ class HomePage extends StatelessWidget {
     final nameFilters = TextEditingController();
     final descFilters = TextEditingController();
     final situaFilters = TextEditingController();
+    final respFilters = TextEditingController();
     final task = Get.find<TaskService>();
     var items = <Task>[].obs;
 
@@ -121,27 +122,29 @@ class HomePage extends StatelessWidget {
                                               'Procurar',
                                               IconButton(
                                                 onPressed: () async {
-                                                  final filteredTask =
-                                                      await task.filter(
-                                                        name:
-                                                            nameFilters
-                                                                .text
-                                                                .isEmpty
-                                                            ? null
-                                                            : nameFilters.text,
-                                                        descricao:
-                                                            descFilters
-                                                                .text
-                                                                .isEmpty
-                                                            ? null
-                                                            : descFilters.text,
-                                                        situacao:
-                                                            situaFilters
-                                                                .text
-                                                                .isEmpty
-                                                            ? null
-                                                            : situaFilters.text,
-                                                      );
+                                                  await controller.filtrarTasks(
+                                                    name:
+                                                        nameFilters.text.isEmpty
+                                                        ? null
+                                                        : nameFilters.text,
+                                                    descricao:
+                                                        descFilters.text.isEmpty
+                                                        ? null
+                                                        : descFilters.text,
+                                                    situacao:
+                                                        situaFilters
+                                                            .text
+                                                            .isEmpty
+                                                        ? null
+                                                        : situaFilters.text,
+                                                    responsavel:
+                                                        respFilters.text.isEmpty
+                                                        ? null
+                                                        : respFilters.text,
+                                                  );
+                                                  Navigator.pop(
+                                                    context,
+                                                  ); // fecha o bottomsheet
                                                 },
                                                 icon: Icon(
                                                   Icons.filter_alt,

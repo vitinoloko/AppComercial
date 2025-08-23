@@ -18,6 +18,31 @@ class TaskController extends GetxController {
     listarTasks();
   }
 
+  Future<void> filtrarTasks({
+    String? name,
+    String? descricao,
+    String? situacao,
+    String? responsavel,
+  }) async {
+    try {
+      isLoading.value = true;
+      error.value = null; // limpa erro
+
+      final filtered = await service.filter(
+        name: name,
+        descricao: descricao,
+        situacao: situacao,
+        responsavel: responsavel,
+      );
+
+      tasks.assignAll(filtered); // ✅ atualiza lista observada pelo Obx
+    } catch (e) {
+      error.value = 'Erro ao filtrar: $e';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // Carregar todas as tasks
   Future<void> listarTasks() async {
     try {

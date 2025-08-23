@@ -9,11 +9,13 @@ class TaskService {
     String? name,
     String? descricao,
     String? situacao,
+    String? responsavel,
   }) async {
     final query = <String, dynamic>{};
     if (name != null) query['name'] = name;
     if (descricao != null) query['descricao'] = descricao;
     if (situacao != null) query['situacao'] = situacao;
+    if (responsavel != null) query['responsavel'] = responsavel;
 
     final list = await api.getList('/task/filtro', query: query);
     return list.map((e) => Task.fromJson(e)).toList();
