@@ -123,6 +123,7 @@ Widget botaoForm(
 
 final List<String> items = ['Pendente', 'Em Andamento', 'Concluida'];
 var selectedValue = ''.obs;
+var filterValue = ''.obs;
 Widget dropFunc() {
   return Container(
     margin: EdgeInsets.symmetric(horizontal: 3, vertical: 2),
@@ -159,6 +160,54 @@ Widget dropFunc() {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             color: Colors.blueGrey[700],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget dropfiltersFunc() {
+  return Obx(
+    () => Container(
+      margin: EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.shade800,
+        borderRadius: BorderRadius.circular(6),
+      ),
+
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton2<String>(
+          iconStyleData: IconStyleData(
+            icon: Icon(Icons.expand_more, color: Colors.grey),
+            openMenuIcon: Icon(
+              Icons.expand_less_sharp,
+              color: const Color.fromARGB(199, 120, 194, 255),
+            ),
+          ),
+          isExpanded: true,
+          hint: Text('Situação:', style: TextStyle(color: Colors.white)),
+          value: filterValue.value.isEmpty ? null : filterValue.value,
+          onChanged: (value) {
+            filterValue.value = value ?? ''; // Atualiza corretamente
+          },
+          items: items
+              .map(
+                (String item) => DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              )
+              .toList(),
+          dropdownStyleData: DropdownStyleData(
+            maxHeight: 200,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.blueGrey[700],
+            ),
           ),
         ),
       ),

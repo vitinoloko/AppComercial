@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:front_end_frotas/task/controllers/task_controller.dart';
-import 'package:front_end_frotas/task/models/task.dart';
-import 'package:front_end_frotas/task/service/task_service.dart';
 import 'package:front_end_frotas/widget/expansion_title.dart';
 import 'package:front_end_frotas/widget/widgets_utils.dart';
 import 'package:get/get.dart';
@@ -32,19 +30,9 @@ class HomePage extends StatelessWidget {
     final descFilters = TextEditingController();
     final situaFilters = TextEditingController();
     final respFilters = TextEditingController();
-    final task = Get.find<TaskService>();
-    var items = <Task>[].obs;
 
     return Container(
       decoration: BoxDecoration(
-        // image: DecorationImage(
-        //   image: AssetImage('fundo.jpg'),
-        //   fit: BoxFit.cover, // cobre todo o container
-        //   colorFilter: ColorFilter.mode(
-        //     const Color.fromARGB(164, 255, 255, 255),
-        //     BlendMode.darken, // mistura a cor com a imagem
-        //   ),
-        // ),
         color: Color(0xFF121212),
         borderRadius: MediaQuery.of(context).size.width < 650
             ? BorderRadius.horizontal(right: Radius.circular(0))
@@ -132,16 +120,20 @@ class HomePage extends StatelessWidget {
                                                         ? null
                                                         : descFilters.text,
                                                     situacao:
-                                                        situaFilters
-                                                            .text
+                                                        filterValue
+                                                            .value
                                                             .isEmpty
                                                         ? null
-                                                        : situaFilters.text,
+                                                        : filterValue.value,
                                                     responsavel:
                                                         respFilters.text.isEmpty
                                                         ? null
                                                         : respFilters.text,
                                                   );
+                                                  nameFilters.clear();
+                                                  descFilters.clear();
+                                                  situaFilters.clear();
+                                                  filterValue.value = '';
                                                   Navigator.pop(
                                                     context,
                                                   ); // fecha o bottomsheet
@@ -174,12 +166,12 @@ class HomePage extends StatelessWidget {
                                         ),
 
                                         textFieldPers(
-                                          controller: situaFilters,
+                                          controller: respFilters,
                                           hint: 'Responavel...',
                                           icon: Icons.person_outline,
                                         ),
 
-                                        dropFunc(),
+                                        dropfiltersFunc(),
                                       ],
                                     ),
                                   ),
