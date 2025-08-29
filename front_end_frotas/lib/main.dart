@@ -1,65 +1,67 @@
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
-import 'package:front_end_frotas/task/controllers/task_controller.dart';
-import 'package:front_end_frotas/task/pages/form_test.dart';
+import 'package:front_end_frotas/widget/bindings.dart';
 import 'package:front_end_frotas/task/controllers/auth_controller.dart';
-import 'package:front_end_frotas/core/api_client.dart';
-import 'package:front_end_frotas/core/token_storage.dart';
+import 'package:front_end_frotas/task/pages/form_test.dart';
 import 'package:front_end_frotas/task/pages/form_text.dart';
 import 'package:front_end_frotas/task/pages/home_page.dart';
 import 'package:front_end_frotas/task/pages/menu_page.dart';
 import 'package:front_end_frotas/login_page.dart';
-import 'package:front_end_frotas/task/service/auth_service.dart';
-import 'package:front_end_frotas/task/service/task_service.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 
-import 'widget/expansion_title.dart';
-
-void main() {
-  Get.lazyPut<ExpansionTitleController>(
-    () => ExpansionTitleController(),
-    fenix: true,
-  );
-  final storage = TokenStorage();
-  final api = ApiClient(http.Client(), storage);
-  final authService = AuthService(api, storage);
-  final taskService = TaskService(api);
-  Get.lazyPut<AuthController>(() => AuthController(authService), fenix: true);
-  Get.lazyPut<TaskController>(() => TaskController(taskService));
-  Get.lazyPut<TaskService>(() => TaskService(api));
-  // Get.put(AuthController(authService), permanent: true);
-
-  // final tasks = TaskService(api);
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  AuthBindig().dependencies();
   runApp(Myapp());
 }
 
 class Myapp extends StatelessWidget {
   // final TaskService tasks;
-  const Myapp({super.key});
-
+  Myapp({super.key});
+  final authController = Get.find<AuthController>();
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
+
       routerDelegate: BeamerDelegate(
         initialPath: '/login',
+        guards: [
+          // Protege rotas privadas (precisam de token)
+          BeamGuard(
+            pathPatterns: ['/home*', '/cadastro*', '/sla*'],
+            check: (context, location) => authController.user.value != null,
+            beamToNamed: (origin, target) => '/login',
+          ),
+          // Protege o login (só pode abrir sem token)
+          BeamGuard(
+            pathPatterns: ['/login'],
+            check: (context, location) => authController.user.value == null,
+            beamToNamed: (origin, target) => '/home',
+          ),
+        ],
         locationBuilder: RoutesLocationBuilder(
           routes: {
-            '/login': (context, state, data) => BeamPage(
-              key: const ValueKey('login'),
-              title: 'login',
-              type: BeamPageType.fadeTransition,
-              child: LoginPage(),
-              // child: LayoutBase(child: LazyScreen(child: HomePage())),
-            ),
-            '/home': (context, state, data) => BeamPage(
-              key: const ValueKey('home'),
-              title: 'Home',
-              type: BeamPageType.fadeTransition,
-              child: LayoutBase(child: HomePage()),
-              // child: LayoutBase(child: LazyScreen(child: HomePage())),
-            ),
+            '/login': (context, state, data) {
+              AuthBindig().dependencies();
+              return BeamPage(
+                key: const ValueKey('login'),
+                title: 'login',
+                type: BeamPageType.slideTransition,
+                child: LoginPage(),
+                // child: LayoutBase(child: LazyScreen(child: HomePage())),
+              );
+            },
+            '/home': (context, state, data) {
+              TaskBindig().dependencies();
+              return BeamPage(
+                key: const ValueKey('home'),
+                title: 'Home',
+                type: BeamPageType.fadeTransition,
+                child: LayoutBase(child: HomePage()),
+                // child: LayoutBase(child: LazyScreen(child: HomePage())),
+              );
+            },
             '/cadastro': (context, state, data) => BeamPage(
               key: const ValueKey('cadastro'),
               title: 'Cadastro',
@@ -93,8 +95,8 @@ class LayoutBase extends StatelessWidget {
     final verticalPadding = width > 800 ? 20.0 : 10.0;
     return Scaffold(
       backgroundColor: Colors.deepPurple.shade900,
-      appBar: width <= 650 ? AppBar(title: const Text("App")) : null,
-      drawer: width <= 650
+      appBar: width <= 750 ? AppBar(title: const Text("App")) : null,
+      drawer: width <= 750
           ? Drawer(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -126,7 +128,7 @@ class LayoutBase extends StatelessWidget {
               ),
             )
           : null,
-      body: width > 650
+      body: width > 750
           ? Container(
               padding: EdgeInsetsGeometry.symmetric(
                 vertical: verticalPadding,
@@ -151,7 +153,7 @@ class ResponsiveBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    if (width > 650) {
+    if (width > 750) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 130),
         child: Row(

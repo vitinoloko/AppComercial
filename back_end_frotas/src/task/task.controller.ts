@@ -29,12 +29,12 @@ export class TaskController {
     }
     return this.taskService.createTask(createTaskDto, req.user);
   }
-
+  @UseGuards(JwtAuthGuard)
   @Get('all')
-  findAll() {
-    return this.taskService.findAll();
+  findAll(@Req() req) {
+    return this.taskService.findAll(req.user);
   }
-
+  @UseGuards(JwtAuthGuard)
   @Get('id/:id')
   findOne(@Param('id') id: string, @Req() req) {
     const taskId = Number(id);
@@ -54,14 +54,15 @@ export class TaskController {
   remove(@Param('id') id: string, @Req() req) {
     return this.taskService.remove(+id, req.user);
   }
-
+  @UseGuards(JwtAuthGuard)
   @Get('filtro')
   filter(
     @Query('name') name?: string,
     @Query('descricao') descricao?: string,
     @Query('situacao') situacao?: string,
-    @Query('responsavel') responsavel?: string
+    @Query('responsavel') responsavel?: string,
+    @Req() req?
   ) {
-    return this.taskService.filterTasks({ name, descricao, situacao, responsavel });
+    return this.taskService.filterTasks({ name, descricao, situacao, responsavel },req.user);
   }
 }

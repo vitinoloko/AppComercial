@@ -36,30 +36,4 @@ class ApiClient {
     }
     throw Exception('POST $path falhou: ${res.statusCode} - ${res.body}');
   }
-
-  Future<List<dynamic>> getList(
-    String path, {
-    Map<String, dynamic>? query,
-  }) async {
-    final res = await _client.get(_uri(path, query), headers: await _headers());
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      final decoded = jsonDecode(res.body);
-      if (decoded is List) return decoded;
-      throw Exception('Resposta não é lista');
-    }
-    throw Exception('GET $path falhou: ${res.statusCode} - ${res.body}');
-  }
-
-  Future<Map<String, dynamic>> getMap(
-    String path, {
-    Map<String, dynamic>? query,
-  }) async {
-    final res = await _client.get(_uri(path, query), headers: await _headers());
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      final decoded = jsonDecode(res.body);
-      if (decoded is Map<String, dynamic>) return decoded;
-      throw Exception('Resposta não é objeto');
-    }
-    throw Exception('GET $path falhou: ${res.statusCode} - ${res.body}');
-  }
 }

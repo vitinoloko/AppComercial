@@ -30,8 +30,8 @@ let TaskService = class TaskService {
         console.log('Tarefa criada com sucesso: ', (0, class_transformer_1.instanceToPlain)(savedTask));
         return (0, class_transformer_1.instanceToPlain)(savedTask);
     }
-    async findAll() {
-        const task = await this.taskRepository.find({ relations: ['user'] });
+    async findAll(user) {
+        const task = await this.taskRepository.find({ where: { user: { id: user.id } }, relations: ['user'] });
         if (!task || task.length === 0) {
             throw new common_1.NotFoundException('Tarefas não encontradas!');
         }
@@ -39,15 +39,15 @@ let TaskService = class TaskService {
         return (0, class_transformer_1.instanceToPlain)(task);
     }
     async findOneById(id, user) {
-        const task = await this.taskRepository.findOne({ where: { id }, relations: ['user'] });
+        const task = await this.taskRepository.findOne({ where: { id, user: { id: user.id } }, relations: ['user'] });
         if (!task) {
             throw new common_1.NotFoundException(`Tarefa com ID (${id}) não foi encontrada.`);
         }
         console.log('Tarefa encontrada com sucesso no banco de dados:', (0, class_transformer_1.instanceToPlain)(task));
         return (0, class_transformer_1.instanceToPlain)(task);
     }
-    async filterTasks(filters) {
-        const where = {};
+    async filterTasks(filters, user) {
+        const where = { user: { id: user.id } };
         if (filters.name)
             where.name = (0, typeorm_2.ILike)(`%${filters.name}%`);
         if (filters.descricao)
@@ -65,7 +65,7 @@ let TaskService = class TaskService {
         return (0, class_transformer_1.instanceToPlain)(findTask);
     }
     async update(id, updateTaskDto, user) {
-        const task = await this.taskRepository.findOne({ where: { id }, relations: ['user'] });
+        const task = await this.taskRepository.findOne({ where: { user: { id: user.id } }, relations: ['user'] });
         if (!task) {
             throw new common_1.NotFoundException(`Tarefa com ID (${id}) não foi encontrada.`);
         }
@@ -83,9 +83,6 @@ let TaskService = class TaskService {
     async remove(id, user) {
         if (!user) {
             throw new common_1.UnauthorizedException('Usuário não autenticado.');
-        }
-        if (user.role !== 'admin') {
-            throw new common_1.UnauthorizedException('Somente admin pode excluir tarefas.');
         }
         const task = await this.taskRepository.findOne({ where: { id }, relations: ['user'] });
         if (!task) {

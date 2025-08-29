@@ -6,14 +6,14 @@ export declare class TaskService {
     private taskRepository;
     constructor(taskRepository: Repository<Task>);
     createTask(createTaskDto: CreateTaskDto, user: any): Promise<Task | any>;
-    findAll(): Promise<Task[] | any>;
+    findAll(user: any): Promise<Task[] | any>;
     findOneById(id: number, user: any): Promise<Task | any>;
     filterTasks(filters: {
         name?: string;
         descricao?: string;
         situacao?: string;
         responsavel?: string;
-    }): Promise<Task[] | any>;
+    }, user: any): Promise<Task[] | any>;
     update(id: number, updateTaskDto: UpdateTaskDto, user: any): Promise<Task | any>;
     remove(id: number, user: any): Promise<{
         message: string;

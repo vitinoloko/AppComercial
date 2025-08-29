@@ -35,11 +35,18 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_secure_storage: ^9.2.4
+  shared_preferences: ^2.5.3
   http: ^1.5.0
   beamer: ^1.7.0
   get: ^4.7.2
   simple_grid: ^0.1.5
   dropdown_button2: ^2.3.9
+
+
+
+#teste
+  easy_refresh: ^3.4.0
+  pull_to_refresh: ^2.0.0
 
 dev_dependencies:
   flutter_test:

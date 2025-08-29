@@ -1,16 +1,17 @@
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 import 'package:front_end_frotas/task/controllers/auth_controller.dart';
+import 'package:front_end_frotas/task/controllers/task_controller.dart';
 import 'package:get/get.dart';
 
 class LoginPage extends StatelessWidget {
+  LoginPage({super.key});
   final username = TextEditingController();
   final password = TextEditingController();
   final auth = Get.find<AuthController>();
-
-  LoginPage({super.key});
-  RxBool olhos = true.obs;
-  final RxString emailError = "".obs;
+  final controller = Get.find<TaskController>();
+  final RxBool olhos = true.obs;
+  final RxString userNamelError = "".obs;
   final RxString senhaError = "".obs;
   @override
   Widget build(BuildContext context) {
@@ -51,11 +52,11 @@ class LoginPage extends StatelessWidget {
                         floatingLabelBehavior: FloatingLabelBehavior.always,
                         label: Padding(
                           padding: EdgeInsets.symmetric(vertical: 8),
-                          child: Text('Gmail'),
+                          child: Text('Username'),
                         ),
-                        errorText: emailError.value == ''
+                        errorText: userNamelError.value == ''
                             ? null
-                            : emailError.value,
+                            : userNamelError.value,
 
                         hintStyle: TextStyle(
                           color: Color.fromARGB(151, 255, 255, 255),
@@ -106,7 +107,7 @@ class LoginPage extends StatelessWidget {
                         ),
                         errorText: senhaError.value == ''
                             ? null
-                            : emailError.value,
+                            : userNamelError.value,
                         suffixIcon: IconButton(
                           style: IconButton.styleFrom(
                             overlayColor: Colors.transparent,
@@ -160,9 +161,48 @@ class LoginPage extends StatelessWidget {
                       onPressed: auth.loading.value
                           ? null
                           : () async {
+                              userNamelError.value = '';
+                              senhaError.value = '';
+
+                              if (username.text.trim().isEmpty) {
+                                userNamelError.value = "Campo obrigatório";
+                              } else {
+                                userNamelError.value = "";
+                              }
+
+                              if (password.text.trim().isEmpty) {
+                                senhaError.value = "Campo obrigatório";
+                              } else {
+                                senhaError.value = "";
+                              }
+
+                              // limpa usuário e lista antes de logar
+                              controller.tasks.clear();
+                              auth.user.value = null;
+
                               await auth.login(username.text, password.text);
+
                               if (auth.user.value != null) {
                                 context.beamToNamed('/home');
+                                await controller.listarTasks();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Oops... verifique suas credenciais e tente novamente.',
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: EdgeInsets.fromLTRB(
+                                      50,
+                                      40,
+                                      50,
+                                      50,
+                                    ), // topo da tela
+                                    backgroundColor: Colors.black,
+                                  ),
+                                );
                               }
                             },
 

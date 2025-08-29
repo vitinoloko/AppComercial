@@ -1,9 +1,28 @@
-import 'package:front_end_frotas/core/api_client.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:front_end_frotas/task/models/task.dart';
+import 'package:front_end_frotas/core/token_storage.dart';
 
 class TaskService {
-  final ApiClient api;
-  TaskService(this.api);
+  final String baseUrl = 'http://localhost:3001';
+  final http.Client _client;
+  final TokenStorage _tokenStorage;
+
+  TaskService(this._client, this._tokenStorage);
+
+  Future<Map<String, String>> _headers() async {
+    final token = await _tokenStorage.read();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  Uri _uri(String path, [Map<String, dynamic>? query]) {
+    return Uri.parse(
+      '$baseUrl$path',
+    ).replace(queryParameters: query?.map((k, v) => MapEntry(k, '$v')));
+  }
 
   Future<List<Task>> filter({
     String? name,
@@ -17,8 +36,15 @@ class TaskService {
     if (situacao != null) query['situacao'] = situacao;
     if (responsavel != null) query['responsavel'] = responsavel;
 
-    final list = await api.getList('/task/filtro', query: query);
-    return list.map((e) => Task.fromJson(e)).toList();
+    final res = await _client.get(
+      _uri('/task/filtro', query),
+      headers: await _headers(),
+    );
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final list = jsonDecode(res.body) as List;
+      return list.map((e) => Task.fromJson(e)).toList();
+    }
+    throw Exception('Erro ao filtrar tasks: ${res.statusCode} - ${res.body}');
   }
 
   Future<Task> criar({
@@ -28,14 +54,21 @@ class TaskService {
     required String responsavel,
     String? observacao,
   }) async {
-    final map = await api.post('/task', {
-      'name': name,
-      'descricao': descricao,
-      'situacao': situacao,
-      'responsavel': responsavel,
-      'observacao': observacao,
-    });
-    return Task.fromJson(map);
+    final res = await _client.post(
+      _uri('/task'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'name': name,
+        'descricao': descricao,
+        'situacao': situacao,
+        'responsavel': responsavel,
+        'observacao': observacao,
+      }),
+    );
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return Task.fromJson(jsonDecode(res.body));
+    }
+    throw Exception('Erro ao criar task: ${res.statusCode} - ${res.body}');
   }
 
   Future<List<Task>> listar({
@@ -45,18 +78,33 @@ class TaskService {
     String? responsavel,
     String? observacao,
   }) async {
-    final list = await api.getList(
-      '/task/filtro',
-      query: {
-        if (name != null && name.isNotEmpty) 'name': name,
-        if (descricao != null && descricao.isNotEmpty) 'descricao': descricao,
-        if (situacao != null && situacao.isNotEmpty) 'situacao': situacao,
-        if (responsavel != null && responsavel.isNotEmpty)
-          'responsavel': responsavel,
-        if (observacao != null && observacao.isNotEmpty)
-          'observacao': observacao,
-      },
+    final query = {
+      if (name?.isNotEmpty ?? false) 'name': name,
+      if (descricao?.isNotEmpty ?? false) 'descricao': descricao,
+      if (situacao?.isNotEmpty ?? false) 'situacao': situacao,
+      if (responsavel?.isNotEmpty ?? false) 'responsavel': responsavel,
+      if (observacao?.isNotEmpty ?? false) 'observacao': observacao,
+    };
+
+    final res = await _client.get(
+      _uri('/task/filtro', query),
+      headers: await _headers(),
     );
-    return list.map((e) => Task.fromJson(e as Map<String, dynamic>)).toList();
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final list = jsonDecode(res.body) as List;
+      return list.map((e) => Task.fromJson(e)).toList();
+    }
+    throw Exception('Erro ao listar tasks: ${res.statusCode} - ${res.body}');
+  }
+
+  Future<void> deletar(int id) async {
+    final res = await _client.delete(
+      _uri('/task/delete/$id'),
+      headers: await _headers(),
+    );
+    if (!(res.statusCode >= 200 && res.statusCode < 300)) {
+      throw Exception('Erro ao deletar task: ${res.statusCode} - ${res.body}');
+    }
   }
 }

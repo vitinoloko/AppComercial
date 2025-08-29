@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:front_end_frotas/task/service/task_service.dart';
 import 'package:get/get.dart';
 import 'package:front_end_frotas/task/models/task.dart';
@@ -11,6 +12,12 @@ class TaskController extends GetxController {
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
   var error = RxnString(); // OBS: nullable, pra poder limpar
+  var selectedTask = Rxn<Task>();
+  final nameController = TextEditingController();
+  final descricaoController = TextEditingController();
+  final situacaoController = TextEditingController();
+  final responsavelController = TextEditingController();
+  final observacaoController = TextEditingController(); // <--- ESSE FALTAVA
 
   @override
   void onInit() {
@@ -79,6 +86,19 @@ class TaskController extends GetxController {
     } catch (e) {
       error.value = 'Erro ao criar: $e';
       // NÃO tocar em tasks
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deletarTask(int id) async {
+    try {
+      isLoading.value = true;
+      await service.deletar(id);
+      tasks.removeWhere((t) => t.id == id); // atualiza a lista local
+      error.value = null;
+    } catch (e) {
+      error.value = 'Erro ao deletar: $e';
     } finally {
       isLoading.value = false;
     }

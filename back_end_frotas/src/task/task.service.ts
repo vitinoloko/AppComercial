@@ -26,8 +26,8 @@ export class TaskService {
     return instanceToPlain(savedTask);
   }
 
-  async findAll(): Promise<Task[] | any> {
-    const task = await this.taskRepository.find({ relations: ['user'] });
+  async findAll(user): Promise<Task[] | any> {
+    const task = await this.taskRepository.find({where: { user: { id: user.id } },relations: ['user'] });
     if (!task || task.length === 0) {
       throw new NotFoundException('Tarefas não encontradas!');
     }
@@ -36,7 +36,7 @@ export class TaskService {
   }
 
   async findOneById(id: number, user): Promise<Task | any> {
-    const task = await this.taskRepository.findOne({ where: { id }, relations: ['user'] });
+    const task = await this.taskRepository.findOne({ where: {id, user:{id:user.id}}, relations: ['user'] });
     if (!task) {
       throw new NotFoundException(`Tarefa com ID (${id}) não foi encontrada.`);
     }
@@ -49,8 +49,8 @@ export class TaskService {
     descricao?: string;
     situacao?: string;
     responsavel?:string;
-  }): Promise<Task[] | any> {
-    const where: FindOptionsWhere<Task> = {};
+  },user): Promise<Task[] | any> {
+    const where: FindOptionsWhere<Task> = {user:{id:user.id}}
 
     if (filters.name) where.name = ILike(`%${filters.name}%`);
     if (filters.descricao) where.descricao = ILike(`%${filters.descricao}%`);
@@ -67,7 +67,7 @@ export class TaskService {
   }
 
   async update(id: number, updateTaskDto: UpdateTaskDto, user): Promise<Task | any> {
-    const task = await this.taskRepository.findOne({ where: { id }, relations: ['user'] });
+    const task = await this.taskRepository.findOne({ where: { user:{id:user.id} }, relations: ['user'] });
     if (!task) {
       throw new NotFoundException(`Tarefa com ID (${id}) não foi encontrada.`);
     }
@@ -92,9 +92,9 @@ export class TaskService {
       throw new UnauthorizedException('Usuário não autenticado.');
     }
 
-    if (user.role !== 'admin') {
-      throw new UnauthorizedException('Somente admin pode excluir tarefas.');
-    }
+    // if (user.role !== 'admin') {
+    //   throw new UnauthorizedException('Somente admin pode excluir tarefas.');
+    // }
 
     const task = await this.taskRepository.findOne({ where: { id }, relations: ['user'] });
 

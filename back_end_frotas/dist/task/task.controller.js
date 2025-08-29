@@ -29,8 +29,8 @@ let TaskController = class TaskController {
         }
         return this.taskService.createTask(createTaskDto, req.user);
     }
-    findAll() {
-        return this.taskService.findAll();
+    findAll(req) {
+        return this.taskService.findAll(req.user);
     }
     findOne(id, req) {
         const taskId = Number(id);
@@ -45,8 +45,8 @@ let TaskController = class TaskController {
     remove(id, req) {
         return this.taskService.remove(+id, req.user);
     }
-    filter(name, descricao, situacao, responsavel) {
-        return this.taskService.filterTasks({ name, descricao, situacao, responsavel });
+    filter(name, descricao, situacao, responsavel, req) {
+        return this.taskService.filterTasks({ name, descricao, situacao, responsavel }, req.user);
     }
 };
 exports.TaskController = TaskController;
@@ -60,12 +60,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TaskController.prototype, "create", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('all'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], TaskController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('id/:id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Req)()),
@@ -93,13 +96,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TaskController.prototype, "remove", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('filtro'),
     __param(0, (0, common_1.Query)('name')),
     __param(1, (0, common_1.Query)('descricao')),
     __param(2, (0, common_1.Query)('situacao')),
     __param(3, (0, common_1.Query)('responsavel')),
+    __param(4, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, Object]),
     __metadata("design:returntype", void 0)
 ], TaskController.prototype, "filter", null);
 exports.TaskController = TaskController = __decorate([
