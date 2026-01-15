@@ -16,6 +16,6 @@ async function bootstrap() {
   // 🔥 Torna a pasta "uploads" pública
   app.use('/uploads', express.static(join(__dirname, '..','..', 'uploads')));
 
-  await app.listen(3000);
+  await app.listen(2999);
 }
 bootstrap()
